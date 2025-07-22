@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Register - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center mt-4">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-body p-4">
+                    <h2 class="text-center mb-4">Create Your Account</h2>
+                    <p class="text-center text-muted mb-4">
+                        Register to apply for constituency bursary funds
+                    </p>
+                    
+                    <!-- Progress indicator -->
+                    <div class="progress mb-4" style="height: 5px;">
+                        <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                    </div>
+                    
+                    <form method="post" class="needs-validation" novalidate data-loading>
+                        {% csrf_token %}
+                        {{ form|crispy }}
+                        
+                        <div class="form-check mb-4">
+                            <input type="checkbox" class="form-check-input" id="terms" required>
+                            <label class="form-check-label" for="terms">
+                                I agree to the <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Terms and Conditions</a>
+                            </label>
+                            <div class="invalid-feedback">
+                                You must agree to the terms before registering.
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-user-plus"></i> Create Account
+                            </button>
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <p class="text-center mb-0">
+                            Already have an account? 
+                            <a href="{% url 'accounts:login' %}" class="fw-bold text-decoration-none">
+                                Sign in here
+                            </a>
+                        </p>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Terms Modal -->
+<div class="modal fade" id="termsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Terms and Conditions</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <h6>1. Eligibility</h6>
+                <p>By registering, you confirm that you are a resident of {{ CONSTITUENCY_NAME }} constituency and meet all eligibility requirements for the bursary program.</p>
+                
+                <h6>2. Information Accuracy</h6>
+                <p>You agree to provide accurate and truthful information. False information may lead to disqualification and legal action.</p>
+                
+                <h6>3. Document Verification</h6>
+                <p>All documents submitted will be verified. You consent to the verification process and any necessary background checks.</p>
+                
+                <h6>4. Data Privacy</h6>
+                <p>Your personal information will be handled in accordance with data protection laws and will only be used for bursary processing purposes.</p>
+                
+                <h6>5. Communication</h6>
+                <p>You agree to receive communications regarding your application via the phone number and email provided.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Update progress bar based on filled fields
+    const form = document.querySelector('form');
+    const inputs = form.querySelectorAll('input:not([type="hidden"]):not([type="checkbox"])');
+    const progressBar = document.querySelector('.progress-bar');
+    
+    function updateProgress() {
+        const filledInputs = Array.from(inputs).filter(input => input.value.trim() !== '');
+        const progress = (filledInputs.length / inputs.length) * 100;
+        progressBar.style.width = progress + '%';
+    }
+    
+    inputs.forEach(input => {
+        input.addEventListener('input', updateProgress);
+    });
+    
+    // Initial progress check
+    updateProgress();
+</script>
+{% endblock %}

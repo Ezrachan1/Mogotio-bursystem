@@ -1,0 +1,26 @@
+Email Verification - {{ constituency_name }}
+
+Dear {{ user.get_full_name|default:user.username }},
+
+Thank you for registering with the {{ constituency_name }} Bursary System. 
+Please use the verification code below to complete your registration:
+
+VERIFICATION CODE: {{ code }}
+
+This code will expire in {{ expiry_minutes }} minutes.
+
+SECURITY TIPS:
+- Never share this code with anyone
+- Our staff will never ask for your verification code
+- If you didn't request this code, please ignore this email
+
+Once verified, you'll be able to:
+- Submit bursary applications
+- Upload required documents
+- Track your application status
+- Receive notifications about your applications
+
+If you're having trouble, please contact us at {{ CONSTITUENCY_EMAIL }}
+
+Best regards,
+{{ constituency_name }} Bursary Team

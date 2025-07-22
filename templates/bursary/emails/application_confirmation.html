@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application Confirmation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            background-color: #f4f4f4;
+            padding: 30px;
+            border-radius: 10px;
+        }
+        .header {
+            background-color: #28a745;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 10px 10px 0 0;
+            margin: -30px -30px 20px -30px;
+        }
+        .info-box {
+            background-color: #e9ecef;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .info-item {
+            margin: 10px 0;
+        }
+        .info-label {
+            font-weight: bold;
+            color: #495057;
+        }
+        .reference-number {
+            font-size: 1.5em;
+            color: #007bff;
+            font-weight: bold;
+            text-align: center;
+            padding: 15px;
+            background-color: #e7f3ff;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 0.9em;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Application Submitted Successfully!</h1>
+        </div>
+        
+        <h2>Dear {{ user.first_name|default:"Applicant" }},</h2>
+        
+        <p>Your bursary application has been successfully submitted. Please keep this email for your records.</p>
+        
+        <div class="reference-number">
+            Reference Number: {{ application.application_number }}
+        </div>
+        
+        <div class="info-box">
+            <h3>Application Details:</h3>
+            <div class="info-item">
+                <span class="info-label">Applicant Name:</span> {{ application.first_name }} {{ application.last_name }}
+            </div>
+            <div class="info-item">
+                <span class="info-label">Institution:</span> {{ application.institution_name }}
+            </div>
+            <div class="info-item">
+                <span class="info-label">Course:</span> {{ application.course_name }}
+            </div>
+            <div class="info-item">
+                <span class="info-label">Academic Year:</span> {{ application.academic_year }}
+            </div>
+            <div class="info-item">
+                <span class="info-label">Amount Requested:</span> KES {{ application.amount_requested|floatformat:2 }}
+            </div>
+            <div class="info-item">
+                <span class="info-label">Application Status:</span> {{ application.get_status_display }}
+            </div>
+            <div class="info-item">
+                <span class="info-label">Date Submitted:</span> {{ application.submitted_at|date:"F d, Y at H:i" }}
+            </div>
+        </div>
+        
+        <h3>What Happens Next?</h3>
+        <ol>
+            <li>Your application will be reviewed by our committee</li>
+            <li>You will receive updates via email as your application progresses</li>
+            <li>The review process typically takes 2-4 weeks</li>
+            <li>You can check your application status anytime by logging into your account</li>
+        </ol>
+        
+        <p><strong>Important:</strong> Please ensure you have submitted all required documents. Incomplete applications may be delayed or rejected.</p>
+        
+        <div class="footer">
+            <p>If you have any questions, please contact our support team.</p>
+            <p>&copy; {% now "Y" %} {{ site_name }}. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

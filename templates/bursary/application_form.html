@@ -1,0 +1,253 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+{% if form.instance.pk %}Edit{% else %}New{% endif %} Bursary Application - {{ block.super }}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <!-- Progress Steps -->
+            <div class="progress-steps mb-4">
+                <div class="progress-step active">
+                    <div class="progress-step-icon">
+                        <i class="fas fa-edit"></i>
+                    </div>
+                    <small>Application Form</small>
+                </div>
+                <div class="progress-step">
+                    <div class="progress-step-icon">
+                        <i class="fas fa-upload"></i>
+                    </div>
+                    <small>Upload Documents</small>
+                </div>
+                <div class="progress-step">
+                    <div class="progress-step-icon">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <small>Submit</small>
+                </div>
+            </div>
+            
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-file-alt"></i> 
+                        {% if object %}Edit{% else %}New{% endif %} Bursary Application
+                    </h4>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <form method="post" class="needs-validation" novalidate data-loading>
+                        {% csrf_token %}
+                        {{ form|crispy }}
+                        
+                        <div class="alert alert-info mt-4">
+                            <h6><i class="fas fa-info-circle"></i> Important Notes:</h6>
+                            <ul class="mb-0">
+                                <li>Ensure all information provided is accurate and truthful.</li>
+                                <li>You will need to upload supporting documents in the next step.</li>
+                                <li>False information may lead to disqualification.</li>
+                                <li>You can save as draft and complete later.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mt-4">
+                            <button type="submit" name="save_draft" class="btn btn-secondary">
+                                <i class="fas fa-save"></i> Save as Draft
+                            </button>
+                            <button type="submit" name="save_continue" class="btn btn-primary">
+                                Save and Continue <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Styles for dynamic institution fields and progress steps */
+#div_id_institution, #div_id_new_institution_name {
+    transition: opacity 0.3s ease;
+}
+
+.progress-steps {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.progress-step {
+    flex: 1;
+    text-align: center;
+    position: relative;
+}
+
+.progress-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    width: 100%;
+    height: 2px;
+    background-color: #dee2e6;
+    z-index: -1;
+}
+
+.progress-step.active:not(:last-child)::after {
+    background-color: #0d6efd;
+}
+
+.progress-step-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #dee2e6;
+    color: #6c757d;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+}
+
+.progress-step.active .progress-step-icon {
+    background-color: #0d6efd;
+    color: white;
+}
+
+.progress-step small {
+    display: block;
+    color: #6c757d;
+}
+
+.progress-step.active small {
+    color: #0d6efd;
+    font-weight: bold;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // --- Elements ---
+    const educationLevelSelect = document.getElementById('id_education_level');
+    const institutionSelect = document.getElementById('id_institution');
+    const institutionWrapper = document.getElementById('div_id_institution');
+
+    // --- Validation and Setup ---
+    if (!educationLevelSelect || !institutionSelect || !institutionWrapper) {
+        console.error('Form elements for institution filtering are missing!');
+        return;
+    }
+
+    // Create a container for error messages, placed neatly under the institution select field
+    const errorContainer = document.createElement('div');
+    errorContainer.className = 'text-danger small mt-1';
+    institutionWrapper.appendChild(errorContainer);
+
+    // --- Functions ---
+
+    /**
+     * Sets the state of the institution dropdown.
+     * @param {boolean} isLoading - Whether to show a loading state.
+     * @param {string|null} message - An optional message to display in the dropdown.
+     */
+    function setInstitutionState(isLoading, message = null) {
+        institutionSelect.disabled = isLoading;
+        if (isLoading) {
+            institutionSelect.innerHTML = `<option value="">${message || 'Loading...'}</option>`;
+        }
+        errorContainer.textContent = ''; // Clear previous errors
+    }
+
+    /**
+     * Populates the institution dropdown with new options.
+     * @param {Array} institutions - Array of institution objects [{id, name}].
+     */
+    function populateInstitutions(institutions) {
+        institutionSelect.innerHTML = '<option value="">---------</option>'; // Reset and add placeholder
+        if (institutions && institutions.length > 0) {
+            institutions.forEach(inst => {
+                const option = new Option(inst.name, inst.id);
+                institutionSelect.appendChild(option);
+            });
+        }
+        // Always add the "Other" option for manual entry
+        institutionSelect.appendChild(new Option('Other (specify below)', 'other'));
+    }
+
+    /**
+     * Handles errors during the fetch process.
+     * @param {Error} error - The error object.
+     */
+    function handleFetchError(error) {
+        console.error('Failed to load institutions:', error);
+        setInstitutionState(true, 'Could not load institutions');
+        errorContainer.textContent = 'There was a problem fetching the list of institutions. Please try refreshing the page.';
+    }
+
+    /**
+     * Fetches and updates institutions based on the selected education level.
+     */
+    async function updateInstitutions() {
+        const levelId = educationLevelSelect.value;
+
+        if (!levelId) {
+            setInstitutionState(true, 'Select an education level first');
+            return;
+        }
+
+        setInstitutionState(true, 'Loading institutions...');
+        const url = `/bursary/ajax/filter-institutions/?education_level=${encodeURIComponent(levelId)}`;
+
+        try {
+            const response = await fetch(url, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            populateInstitutions(data.institutions);
+
+        } catch (error) {
+            handleFetchError(error);
+        } finally {
+            institutionSelect.disabled = false;
+        }
+    }
+
+    // --- Event Listener ---
+    educationLevelSelect.addEventListener('change', updateInstitutions);
+
+    // --- Initial State ---
+    // Set the initial state of the institution dropdown when the page loads.
+    if (!educationLevelSelect.value) {
+        setInstitutionState(true, 'Select an education level first');
+    } else {
+        // If a level is already selected (e.g., on form validation error), trigger the update.
+        updateInstitutions();
+    }
+});
+</script>
+{% endblock %}

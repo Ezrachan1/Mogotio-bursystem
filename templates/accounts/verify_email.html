@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Email Verification{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Email Verification</h3>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        We've sent a verification code to your email address: 
+                        <strong>{{ user.email }}</strong>
+                    </div>
+                    
+                    <p class="text-muted">
+                        Please check your email and enter the 6-digit verification code below.
+                        The code will expire in 10 minutes.
+                    </p>
+                    
+                    <form method="post" id="verification-form">
+                        {% csrf_token %}
+                        {{ form|crispy }}
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-check"></i> Verify Email
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="text-center">
+                        <p class="mb-2">Didn't receive the code?</p>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="resend-code">
+                            <i class="fas fa-redo"></i> Resend Code
+                        </button>
+                    </div>
+                    
+                    <div class="mt-3 text-center">
+                        <small class="text-muted">
+                            <i class="fas fa-shield-alt"></i> 
+                            Check your spam folder if you don't see the email in your inbox.
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const resendButton = document.getElementById('resend-code');
+    let cooldownTimer = null;
+    
+    resendButton.addEventListener('click', function() {
+        // Disable button
+        resendButton.disabled = true;
+        resendButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+        
+        // Send AJAX request
+        fetch("{% url 'accounts:resend_code' %}", {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // Show success message
+                showAlert('success', data.message);
+                
+                // Start cooldown timer (2 minutes)
+                let seconds = 120;
+                resendButton.innerHTML = `Wait ${seconds}s`;
+                
+                cooldownTimer = setInterval(function() {
+                    seconds--;
+                    if (seconds > 0) {
+                        resendButton.innerHTML = `Wait ${seconds}s`;
+                    } else {
+                        clearInterval(cooldownTimer);
+                        resendButton.disabled = false;
+                        resendButton.innerHTML = '<i class="fas fa-redo"></i> Resend Code';
+                    }
+                }, 1000);
+            } else {
+                // Show error message
+                showAlert('danger', data.message);
+                resendButton.disabled = false;
+                resendButton.innerHTML = '<i class="fas fa-redo"></i> Resend Code';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('danger', 'An error occurred. Please try again.');
+            resendButton.disabled = false;
+            resendButton.innerHTML = '<i class="fas fa-redo"></i> Resend Code';
+        });
+    });
+    
+    function showAlert(type, message) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show mt-3`;
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        const form = document.getElementById('verification-form');
+        form.parentNode.insertBefore(alertDiv, form.nextSibling);
+        
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => {
+            alertDiv.remove();
+        }, 5000);
+    }
+});
+</script>
+{% endblock %}

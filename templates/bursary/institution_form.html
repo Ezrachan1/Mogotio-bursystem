@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}{% if object %}Edit{% else %}Add{% endif %} Institution - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-university"></i> 
+                        {% if object %}Edit{% else %}Add New{% endif %} Institution
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="id_name" class="form-label">Institution Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="id_name" name="name" 
+                                   value="{{ form.name.value|default:'' }}" required>
+                            {% if form.name.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.name.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Enter the full official name of the institution</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_institution_type" class="form-label">Institution Type <span class="text-danger">*</span></label>
+                            <select class="form-select" id="id_institution_type" name="institution_type" required>
+                                <option value="">Select Type</option>
+                                <option value="primary" {% if form.institution_type.value == 'primary' %}selected{% endif %}>Primary School</option>
+                                <option value="secondary" {% if form.institution_type.value == 'secondary' %}selected{% endif %}>Secondary School</option>
+                                <option value="tvet" {% if form.institution_type.value == 'tvet' %}selected{% endif %}>TVET/Technical College</option>
+                                <option value="university" {% if form.institution_type.value == 'university' %}selected{% endif %}>University</option>
+                                <option value="other" {% if form.institution_type.value == 'other' %}selected{% endif %}>Other</option>
+                            </select>
+                            {% if form.institution_type.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.institution_type.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_county" class="form-label">County <span class="text-danger">*</span></label>
+                            <select class="form-select" id="id_county" name="county" required>
+                                <option value="">Select County</option>
+                                <option value="Baringo" {% if form.county.value == 'Baringo' %}selected{% endif %}>Baringo</option>
+                                <option value="Bomet" {% if form.county.value == 'Bomet' %}selected{% endif %}>Bomet</option>
+                                <option value="Bungoma" {% if form.county.value == 'Bungoma' %}selected{% endif %}>Bungoma</option>
+                                <option value="Busia" {% if form.county.value == 'Busia' %}selected{% endif %}>Busia</option>
+                                <option value="Elgeyo-Marakwet" {% if form.county.value == 'Elgeyo-Marakwet' %}selected{% endif %}>Elgeyo-Marakwet</option>
+                                <option value="Embu" {% if form.county.value == 'Embu' %}selected{% endif %}>Embu</option>
+                                <option value="Garissa" {% if form.county.value == 'Garissa' %}selected{% endif %}>Garissa</option>
+                                <option value="Homa Bay" {% if form.county.value == 'Homa Bay' %}selected{% endif %}>Homa Bay</option>
+                                <option value="Isiolo" {% if form.county.value == 'Isiolo' %}selected{% endif %}>Isiolo</option>
+                                <option value="Kajiado" {% if form.county.value == 'Kajiado' %}selected{% endif %}>Kajiado</option>
+                                <option value="Kakamega" {% if form.county.value == 'Kakamega' %}selected{% endif %}>Kakamega</option>
+                                <option value="Kericho" {% if form.county.value == 'Kericho' %}selected{% endif %}>Kericho</option>
+                                <option value="Kiambu" {% if form.county.value == 'Kiambu' %}selected{% endif %}>Kiambu</option>
+                                <option value="Kilifi" {% if form.county.value == 'Kilifi' %}selected{% endif %}>Kilifi</option>
+                                <option value="Kirinyaga" {% if form.county.value == 'Kirinyaga' %}selected{% endif %}>Kirinyaga</option>
+                                <option value="Kisii" {% if form.county.value == 'Kisii' %}selected{% endif %}>Kisii</option>
+                                <option value="Kisumu" {% if form.county.value == 'Kisumu' %}selected{% endif %}>Kisumu</option>
+                                <option value="Kitui" {% if form.county.value == 'Kitui' %}selected{% endif %}>Kitui</option>
+                                <option value="Kwale" {% if form.county.value == 'Kwale' %}selected{% endif %}>Kwale</option>
+                                <option value="Laikipia" {% if form.county.value == 'Laikipia' %}selected{% endif %}>Laikipia</option>
+                                <option value="Lamu" {% if form.county.value == 'Lamu' %}selected{% endif %}>Lamu</option>
+                                <option value="Machakos" {% if form.county.value == 'Machakos' %}selected{% endif %}>Machakos</option>
+                                <option value="Makueni" {% if form.county.value == 'Makueni' %}selected{% endif %}>Makueni</option>
+                                <option value="Mandera" {% if form.county.value == 'Mandera' %}selected{% endif %}>Mandera</option>
+                                <option value="Marsabit" {% if form.county.value == 'Marsabit' %}selected{% endif %}>Marsabit</option>
+                                <option value="Meru" {% if form.county.value == 'Meru' %}selected{% endif %}>Meru</option>
+                                <option value="Migori" {% if form.county.value == 'Migori' %}selected{% endif %}>Migori</option>
+                                <option value="Mombasa" {% if form.county.value == 'Mombasa' %}selected{% endif %}>Mombasa</option>
+                                <option value="Murang'a" {% if form.county.value == "Murang'a" %}selected{% endif %}>Murang'a</option>
+                                <option value="Nairobi" {% if form.county.value == 'Nairobi' %}selected{% endif %}>Nairobi</option>
+                                <option value="Nakuru" {% if form.county.value == 'Nakuru' %}selected{% endif %}>Nakuru</option>
+                                <option value="Nandi" {% if form.county.value == 'Nandi' %}selected{% endif %}>Nandi</option>
+                                <option value="Narok" {% if form.county.value == 'Narok' %}selected{% endif %}>Narok</option>
+                                <option value="Nyamira" {% if form.county.value == 'Nyamira' %}selected{% endif %}>Nyamira</option>
+                                <option value="Nyandarua" {% if form.county.value == 'Nyandarua' %}selected{% endif %}>Nyandarua</option>
+                                <option value="Nyeri" {% if form.county.value == 'Nyeri' %}selected{% endif %}>Nyeri</option>
+                                <option value="Samburu" {% if form.county.value == 'Samburu' %}selected{% endif %}>Samburu</option>
+                                <option value="Siaya" {% if form.county.value == 'Siaya' %}selected{% endif %}>Siaya</option>
+                                <option value="Taita Taveta" {% if form.county.value == 'Taita Taveta' %}selected{% endif %}>Taita Taveta</option>
+                                <option value="Tana River" {% if form.county.value == 'Tana River' %}selected{% endif %}>Tana River</option>
+                                <option value="Tharaka-Nithi" {% if form.county.value == 'Tharaka-Nithi' %}selected{% endif %}>Tharaka-Nithi</option>
+                                <option value="Trans Nzoia" {% if form.county.value == 'Trans Nzoia' %}selected{% endif %}>Trans Nzoia</option>
+                                <option value="Turkana" {% if form.county.value == 'Turkana' %}selected{% endif %}>Turkana</option>
+                                <option value="Uasin Gishu" {% if form.county.value == 'Uasin Gishu' %}selected{% endif %}>Uasin Gishu</option>
+                                <option value="Vihiga" {% if form.county.value == 'Vihiga' %}selected{% endif %}>Vihiga</option>
+                                <option value="Wajir" {% if form.county.value == 'Wajir' %}selected{% endif %}>Wajir</option>
+                                <option value="West Pokot" {% if form.county.value == 'West Pokot' %}selected{% endif %}>West Pokot</option>
+                            </select>
+                            {% if form.county.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.county.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        
+                        <div class="mb-3">
+                            <label for="id_address" class="form-label">Address <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="id_address" name="address" rows="3" required>{{ form.address.value|default:'' }}</textarea>
+                            {% if form.address.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.address.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Enter the physical address or location of the institution</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="id_is_verified" name="is_verified" 
+                                       {% if form.is_verified.value %}checked{% endif %}>
+                                <label class="form-check-label" for="id_is_verified">
+                                    <strong>Verified Institution</strong>
+                                    <br>
+                                    <small class="text-muted">Check this box if the institution has been verified by the constituency office</small>
+                                </label>
+                            </div>
+                            {% if form.is_verified.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.is_verified.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        {% if object %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> 
+                            This institution has been used in <strong>{{ object.applications.count }}</strong> application(s).
+                        </div>
+                        {% endif %}
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'bursary:institution_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Back
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> {% if object %}Update{% else %}Add{% endif %} Institution
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Form validation
+    (function() {
+        'use strict';
+        var forms = document.querySelectorAll('.needs-validation');
+        Array.prototype.slice.call(forms).forEach(function(form) {
+            form.addEventListener('submit', function(event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    })();
+</script>
+{% endblock %}

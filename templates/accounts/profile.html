@@ -1,0 +1,272 @@
+{% extends 'base.html' %}
+{% block title %}My Profile - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-md-4">
+      <!-- Profile Summary Card -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-body text-center">
+          <div class="mb-3">
+            <i class="fas fa-user-circle text-primary" style="font-size: 80px"></i>
+          </div>
+          <h4>{{ profile_user.get_full_name }}</h4>
+          <p class="text-muted mb-2">{{ profile_user.username }}</p>
+
+          <div class="mb-3">
+            {% if profile_user.is_verified %}
+            <span class="badge bg-success">
+              <i class="fas fa-check-circle"></i> Verified
+            </span>
+            {% else %}
+            <span class="badge bg-warning text-dark">
+              <i class="fas fa-exclamation-circle"></i> Unverified
+            </span>
+            {% endif %}
+
+            <span class="badge bg-info">
+              {{ profile_user.get_role_display }}
+            </span>
+          </div>
+
+          <!-- Profile Completion -->
+          <div class="mb-3">
+            <small class="text-muted">Profile Completion</small>
+            <div class="progress mt-1" style="height: 10px">
+              <div
+                class="progress-bar"
+                role="progressbar"
+                data-width="{{ profile_completion }}"
+                aria-valuenow="{{ profile_completion }}"
+                aria-valuemin="0"
+                aria-valuemax="100"
+              ></div>
+            </div>
+            <small class="text-muted">{{ profile_completion|floatformat:0 }}% Complete</small>
+          </div>
+
+          <a href="{% url 'accounts:profile_edit' %}" class="btn btn-primary btn-sm">
+            <i class="fas fa-edit"></i> Edit Profile
+          </a>
+        </div>
+      </div>
+
+      <!-- Quick Stats -->
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h6 class="card-title">Application Statistics</h6>
+          <ul class="list-unstyled mb-0">
+            <li class="d-flex justify-content-between mb-2">
+              <span>Total Applications:</span>
+              <strong>{{ applications.count|default:"0" }}</strong>
+            </li>
+            <li class="d-flex justify-content-between mb-2">
+              <span>Approved:</span>
+              <strong class="text-success">{{ approved_applications|default:"0" }}</strong>
+            </li>
+            <li class="d-flex justify-content-between">
+              <span>Member Since:</span>
+              <strong>{{ profile_user.date_joined|date:"M Y" }}</strong>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-8">
+      <!-- Personal Information -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light">
+          <h5 class="mb-0"><i class="fas fa-user"></i> Personal Information</h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-sm-6 mb-3">
+              <label class="text-muted small">Full Name</label>
+              <p class="mb-0">
+                <strong>{{ profile_user.get_full_name }}</strong>
+              </p>
+            </div>
+            <div class="col-sm-6 mb-3">
+              <label class="text-muted small">ID Number</label>
+              <p class="mb-0">
+                <strong>{{ profile_user.id_number }}</strong>
+              </p>
+            </div>
+            <div class="col-sm-6 mb-3">
+              <label class="text-muted small">Email Address</label>
+              <p class="mb-0">
+                <i class="fas fa-envelope"></i> {{ profile_user.email }}
+              </p>
+            </div>
+            <div class="col-sm-6 mb-3">
+              <label class="text-muted small">Phone Number</label>
+              <p class="mb-0">
+                <i class="fas fa-phone"></i> {{ profile_user.phone_number }}
+                {% if profile_user.is_verified %}
+                <i class="fas fa-check-circle text-success" title="Verified"></i>
+                {% endif %}
+              </p>
+            </div>
+            <div class="col-sm-6 mb-3">
+              <label class="text-muted small">Date of Birth</label>
+              <p class="mb-0">
+                <strong>{{ profile_user.date_of_birth|date:"d M Y"|default:"Not set" }}</strong>
+              </p>
+            </div>
+            <div class="col-sm-6 mb-3">
+              <label class="text-muted small">Gender</label>
+              <p class="mb-0">
+                <strong>{{ profile_user.profile.get_gender_display|default:"Not specified" }}</strong>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Location Information -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light">
+          <h5 class="mb-0">
+            <i class="fas fa-map-marker-alt"></i> Location Information
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-sm-6 mb-3">
+              <label class="text-muted small">Ward</label>
+              <p class="mb-0">
+                <strong>{{ profile_user.ward|default:"Not set" }}</strong>
+              </p>
+            </div>
+            <div class="col-sm-6 mb-3">
+              <label class="text-muted small">Sub-County</label>
+              <p class="mb-0">
+                <strong>{{ profile_user.sub_county|default:"Not set" }}</strong>
+              </p>
+            </div>
+            <div class="col-sm-6 mb-3">
+              <label class="text-muted small">Location</label>
+              <p class="mb-0">
+                <strong>{{ profile_user.location|default:"Not set" }}</strong>
+              </p>
+            </div>
+            <div class="col-sm-6 mb-3">
+              <label class="text-muted small">Village</label>
+              <p class="mb-0">
+                <strong>{{ profile_user.village|default:"Not set" }}</strong>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Guardian/Emergency Contact -->
+      {% if profile_user.profile.guardian_name or profile_user.profile.emergency_contact_name %}
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light">
+          <h5 class="mb-0">
+            <i class="fas fa-phone-alt"></i> Emergency Contacts
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            {% if profile_user.profile.guardian_name %}
+            <div class="col-md-6">
+              <h6>Guardian Information</h6>
+              <p class="mb-1">
+                <strong>{{ profile_user.profile.guardian_name }}</strong>
+              </p>
+              <p class="mb-1">
+                <i class="fas fa-phone"></i> {{ profile_user.profile.guardian_phone|default:"Not provided" }}
+              </p>
+              <p class="mb-0">
+                <small class="text-muted">
+                  Relationship: {{ profile_user.profile.guardian_relationship|default:"Not specified" }}
+                </small>
+              </p>
+            </div>
+            {% endif %}
+            {% if profile_user.profile.emergency_contact_name %}
+            <div class="col-md-6">
+              <h6>Emergency Contact</h6>
+              <p class="mb-1">
+                <strong>{{ profile_user.profile.emergency_contact_name }}</strong>
+              </p>
+              <p class="mb-0">
+                <i class="fas fa-phone"></i> {{ profile_user.profile.emergency_contact_phone|default:"Not provided" }}
+              </p>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Recent Applications -->
+      {% if applications %}
+      <div class="card shadow-sm">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">
+            <i class="fas fa-file-alt"></i> Recent Applications
+          </h5>
+          <a href="{% url 'bursary:application_list' %}" class="btn btn-sm btn-outline-primary">
+            View All
+          </a>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>Application #</th>
+                  <th>Academic Year</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for application in applications %}
+                <tr>
+                  <td>{{ application.application_number }}</td>
+                  <td>{{ application.academic_year.year }}</td>
+                  <td>KES {{ application.amount_requested|floatformat:2 }}</td>
+                  <td>
+                    <span class="badge badge-{{ application.status }}">
+                      {{ application.get_status_display }}
+                    </span>
+                  </td>
+                  <td>
+                    <a href="{% url 'bursary:application_detail' application.pk %}" class="btn btn-sm btn-outline-primary">
+                      <i class="fas fa-eye"></i>
+                    </a>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate progress bar
+    const progressBar = document.querySelector('.progress-bar');
+    if (progressBar) {
+        const width = progressBar.getAttribute('data-width');
+        progressBar.style.width = '0%';
+        setTimeout(() => {
+            progressBar.style.transition = 'width 1s ease-in-out';
+            progressBar.style.width = width + '%';
+        }, 100);
+    }
+});
+</script>
+{% endblock %}

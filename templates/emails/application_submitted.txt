@@ -1,0 +1,34 @@
+Dear {{ user.first_name }},
+
+Thank you for submitting your bursary application. We have successfully received your application with the following details:
+
+APPLICATION DETAILS
+-------------------
+Application Number: {{ application.application_number }}
+Academic Year: {{ application.academic_year.year }}
+Education Level: {{ application.get_education_level_display }}
+Institution: {{ application.institution.name|default:application.institution_name_other }}
+Amount Requested: KES {{ application.amount_requested|floatformat:2 }}
+Submission Date: {{ application.submitted_at|date:"d M Y, g:i A" }}
+
+WHAT HAPPENS NEXT?
+------------------
+1. Your application will be reviewed by our bursary committee
+2. We may contact you if additional information is required
+3. You will be notified via email and SMS once a decision is made
+4. The review process typically takes 5-10 business days
+
+You can track the status of your application anytime by logging into your account:
+{{ domain }}{% url 'bursary:application_status' application.pk %}
+
+Please ensure your phone number {{ user.phone_number }} is active as we may use it for important communications.
+
+If you have any questions or need to update your application, please contact us immediately.
+
+Best regards,
+{{ constituency_name }} Bursary Committee
+
+---
+This is an automated message from {{ constituency_name }} Bursary System.
+Please do not reply to this email.
+For assistance, contact us at {{ constituency_email }} or {{ constituency_phone }}

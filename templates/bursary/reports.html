@@ -1,0 +1,255 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Reports & Analytics - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-chart-bar"></i> Reports & Analytics</h2>
+        <div>
+            <button onclick="window.print()" class="btn btn-secondary">
+                <i class="fas fa-print"></i> Print Report
+            </button>
+            <a href="{% url 'bursary:export_applications' %}" class="btn btn-success">
+                <i class="fas fa-file-excel"></i> Export Data
+            </a>
+        </div>
+    </div>
+    
+    {% if report_data %}
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-primary">{{ report_data.total_applications }}</h3>
+                    <p class="mb-0">Total Applications</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-info">KES {{ report_data.total_requested|floatformat:0 }}</h3>
+                    <p class="mb-0">Total Requested</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-success">KES {{ report_data.total_approved|floatformat:0 }}</h3>
+                    <p class="mb-0">Total Approved</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-warning">KES {{ report_data.average_requested|floatformat:0 }}</h3>
+                    <p class="mb-0">Average Request</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Status Distribution -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Applications by Status</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="statusChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Education Level Distribution -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Applications by Education Level</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="educationChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Ward Distribution Table -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Distribution by Ward</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Ward</th>
+                                    <th>Applications</th>
+                                    <th>Total Requested</th>
+                                    <th>Total Approved</th>
+                                    <th>Approval Rate</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for ward in ward_distribution %}
+                                <tr>
+                                    <td>{{ ward.applicant__ward|default:"Not Specified" }}</td>
+                                    <td>{{ ward.count }}</td>
+                                    <td>KES {{ ward.total_requested|floatformat:0 }}</td>
+                                    <td>KES {{ ward.total_approved|default:0|floatformat:0 }}</td>
+                                    <td>{{ ward.approval_rate|default:0 }}%</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Special Cases Summary -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Special Cases Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <h4>{{ report_data.special_cases.orphans }}</h4>
+                            <p>Orphan Applicants</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h4>{{ report_data.special_cases.single_parent }}</h4>
+                            <p>Single Parent Families</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h4>{{ report_data.special_cases.disabled }}</h4>
+                            <p>Applicants with Disabilities</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Monthly Trends -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Monthly Application Trends</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="trendsChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Institution Distribution -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Top 10 Institutions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Institution</th>
+                                    <th>Count</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for inst in institution_distribution %}
+                                <tr>
+                                    <td>{{ inst.institution__name|default:"Other" }}</td>
+                                    <td>{{ inst.count }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Education Level Statistics -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Approval Rates by Education Level</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Level</th>
+                                    <th>Total</th>
+                                    <th>Approved</th>
+                                    <th>Rate</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for stat in education_stats %}
+                                <tr>
+                                    <td>{{ stat.level }}</td>
+                                    <td>{{ stat.total }}</td>
+                                    <td>{{ stat.approved }}</td>
+                                    <td>
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar" role="progressbar" 
+                                                 data-width="{{ stat.approval_rate }}">
+                                                {{ stat.approval_rate|floatformat:0 }}%
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> No data available for reporting. Please ensure there are applications in the system.
+    </div>
+    {% endif %}
+</div>
+
+<!-- Hidden data for JavaScript -->
+{% if report_data %}
+<script type="application/json" id="reportData">
+{{ report_data|safe }}
+</script>
+<script type="application/json" id="monthlyData">
+{{ monthly_applications|safe }}
+</script>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/reports.js' %}"></script>
+{% endblock %}

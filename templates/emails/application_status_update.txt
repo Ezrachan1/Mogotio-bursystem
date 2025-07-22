@@ -1,0 +1,86 @@
+Dear {{ user.first_name }},
+
+We are writing to inform you that the status of your bursary application has been updated.
+
+STATUS UPDATE
+-------------
+Application Number: {{ application.application_number }}
+Previous Status: {{ old_status|title }}
+New Status: {{ application.get_status_display }}
+Updated On: {{ application.updated_at|date:"d M Y, g:i A" }}
+
+{% if application.status == 'under_review' %}
+YOUR APPLICATION IS UNDER REVIEW
+--------------------------------
+Our bursary committee has started reviewing your application. This process involves:
+- Verification of submitted documents
+- Assessment of financial need
+- Evaluation based on our selection criteria
+
+We will notify you once the review is complete.
+
+{% elif application.status == 'verified' %}
+YOUR APPLICATION HAS BEEN VERIFIED
+----------------------------------
+Good news! Your application and all supporting documents have been verified successfully. Your application is now in the final stage of approval.
+
+The committee will make the final decision soon, and you will be notified of the outcome.
+
+{% elif application.status == 'approved' %}
+CONGRATULATIONS! YOUR APPLICATION HAS BEEN APPROVED
+--------------------------------------------------
+We are pleased to inform you that your bursary application has been approved!
+
+APPROVAL DETAILS:
+Amount Approved: KES {{ application.approved_amount|floatformat:2 }}
+Approved By: {{ application.approved_by.get_full_name }}
+Approval Date: {{ application.approved_at|date:"d M Y" }}
+
+NEXT STEPS:
+1. The approved amount will be disbursed directly to your institution
+2. You will receive another notification once the disbursement is processed
+3. Contact your institution's finance office after 5-7 business days to confirm receipt
+
+{% elif application.status == 'rejected' %}
+APPLICATION NOT SUCCESSFUL
+--------------------------
+We regret to inform you that your bursary application was not successful in this round.
+
+{% if application.rejection_reason %}
+REASON FOR REJECTION:
+{{ application.rejection_reason }}
+{% endif %}
+
+Please note that you may be eligible to apply again in the next application period. We encourage you to:
+- Review the eligibility criteria carefully
+- Ensure all required documents are complete and valid
+- Apply early in the next application window
+
+{% elif application.status == 'disbursed' %}
+FUNDS HAVE BEEN DISBURSED
+-------------------------
+Great news! The bursary funds have been successfully disbursed.
+
+The approved amount of KES {{ application.approved_amount|floatformat:2 }} has been sent to your institution.
+Please liaise with your institution's finance office to confirm receipt and application of the funds to your fee account.
+
+Thank you for choosing to apply for the {{ constituency_name }} Bursary. We wish you all the best in your studies!
+{% endif %}
+
+You can view more details about your application by logging into your account:
+{{ domain }}{% url 'bursary:application_detail' application.pk %}
+
+{% if application.reviewer_comments %}
+ADDITIONAL COMMENTS:
+{{ application.reviewer_comments }}
+{% endif %}
+
+If you have any questions about this update, please don't hesitate to contact us.
+
+Best regards,
+{{ constituency_name }} Bursary Committee
+
+---
+This is an automated message from {{ constituency_name }} Bursary System.
+Please do not reply to this email.
+For assistance, contact us at {{ constituency_email }} or {{ constituency_phone }}

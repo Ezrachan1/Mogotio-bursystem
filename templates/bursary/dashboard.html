@@ -1,0 +1,252 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+  <h1 class="mb-4"><i class="fas fa-tachometer-alt"></i> Dashboard</h1>
+
+  {% if user.is_applicant %}
+  <!-- Applicant Dashboard -->
+  <div class="row">
+    <div class="col-md-3 mb-4">
+      <div class="card dashboard-card border-primary">
+        <div class="card-body">
+          <h6 class="text-muted">Total Applications</h6>
+          <div class="display-4">{{ total_applications }}</div>
+          <small class="text-muted">
+            <i class="fas fa-file-alt"></i> All time
+          </small>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3 mb-4">
+      <div class="card dashboard-card border-warning">
+        <div class="card-body">
+          <h6 class="text-muted">Pending</h6>
+          <div class="display-4">{{ pending_applications }}</div>
+          <small class="text-muted">
+            <i class="fas fa-clock"></i> Under review
+          </small>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3 mb-4">
+      <div class="card dashboard-card border-success">
+        <div class="card-body">
+          <h6 class="text-muted">Approved</h6>
+          <div class="display-4">{{ approved_applications }}</div>
+          <small class="text-muted">
+            <i class="fas fa-check-circle"></i> Successful
+          </small>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3 mb-4">
+      <div class="card dashboard-card border-info">
+        <div class="card-body">
+          <h6 class="text-muted">Total Awarded</h6>
+          <div class="display-4">{{ total_approved_amount|floatformat:0 }}</div>
+          <small class="text-muted">
+            <i class="fas fa-money-bill-wave"></i> KES
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="row mb-4">
+    <div class="col-12">
+      {% if can_apply %}
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle"></i>
+          Applications are open for <strong>{{ active_year.year }}</strong>.
+          Deadline: <strong>{{ active_year.application_deadline|date:"d M Y, g:i A" }}</strong>
+        </div>
+        <a href="{% url 'bursary:application_create' %}" class="btn btn-primary btn-lg">
+          <i class="fas fa-plus-circle"></i> New Application
+        </a>
+      {% else %}
+        <div class="alert alert-warning">
+          <i class="fas fa-exclamation-triangle"></i>
+          {% if not user.is_verified and not user.is_staff and not user.is_superuser %}
+            Please <a href="{% url 'accounts:verify_email' %}">verify your email address</a> to apply for bursary.
+          {% else %}
+            Applications are currently closed. Please check back later.
+          {% endif %}
+        </div>
+      {% endif %}
+
+      <a href="{% url 'bursary:application_list' %}" class="btn btn-outline-primary">
+        <i class="fas fa-list"></i> View My Applications
+      </a>
+    </div>
+  </div>
+
+  <!-- Recent Applications Table -->
+  <div class="row">
+    <div class="col-12">
+      <h3>Recent Applications</h3>
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Application #</th>
+              <th>Institution</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Date</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for application in recent_applications %}
+            <tr>
+              <td>{{ application.application_number }}</td>
+              <td>{{ application.institution.name }}</td>
+              <td>KES {{ application.amount_requested|floatformat:2 }}</td>
+              <td>
+                <span class="badge badge-{{ application.status }}">
+                  {{ application.get_status_display }}
+                </span>
+              </td>
+              <td>{{ application.created_at|date:"d M Y" }}</td>
+              <td>
+                <a href="{% url 'bursary:application_detail' application.pk %}" class="btn btn-sm btn-outline-primary">
+                  <i class="fas fa-eye"></i> View
+                </a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" class="text-center">No applications yet.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  {% elif user.can_review_applications %}
+  <!-- Staff Dashboard -->
+  <div class="row">
+    <div class="col-md-3 mb-4">
+      <div class="card dashboard-card border-primary">
+        <div class="card-body">
+          <h6 class="text-muted">Total Applications</h6>
+          <div class="display-4">{{ total_applications }}</div>
+          <small class="text-muted">
+            <i class="fas fa-file-alt"></i> All statuses
+          </small>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3 mb-4">
+      <div class="card dashboard-card border-danger">
+        <div class="card-body">
+          <h6 class="text-muted">Pending Review</h6>
+          <div class="display-4">{{ pending_review }}</div>
+          <small class="text-danger">
+            <i class="fas fa-exclamation-circle"></i> Needs attention
+          </small>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3 mb-4">
+      <div class="card dashboard-card border-warning">
+        <div class="card-body">
+          <h6 class="text-muted">Under Review</h6>
+          <div class="display-4">{{ under_review }}</div>
+          <small class="text-muted">
+            <i class="fas fa-search"></i> Being processed
+          </small>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3 mb-4">
+      <div class="card dashboard-card border-success">
+        <div class="card-body">
+          <h6 class="text-muted">Approved Today</h6>
+          <div class="display-4">{{ approved_today }}</div>
+          <small class="text-muted">
+            <i class="fas fa-calendar-day"></i> {{ "now"|date:"d M Y" }}
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <a href="{% url 'bursary:admin_application_list' %}" class="btn btn-primary">
+        <i class="fas fa-tasks"></i> Review Applications
+      </a>
+      <a href="{% url 'bursary:reports' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-chart-bar"></i> View Reports
+      </a>
+      <a href="{% url 'bursary:institution_list' %}" class="btn btn-outline-info">
+        <i class="fas fa-university"></i> Manage Institutions
+      </a>
+      <a href="{% url 'bursary:academic_year_list' %}" class="btn btn-outline-success">
+        <i class="fas fa-calendar"></i> Academic Years
+      </a>
+    </div>
+  </div>
+
+  <!-- Recent Submissions -->
+  <div class="row">
+    <div class="col-12">
+      <h3>Recent Submissions</h3>
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Application #</th>
+              <th>Applicant</th>
+              <th>Institution</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Submitted</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for application in recent_submissions %}
+            <tr>
+              <td>{{ application.application_number }}</td>
+              <td>{{ application.applicant.get_full_name }}</td>
+              <td>{{ application.institution.name }}</td>
+              <td>KES {{ application.amount_requested|floatformat:2 }}</td>
+              <td>
+                <span class="badge badge-{{ application.status }}">
+                  {{ application.get_status_display }}
+                </span>
+              </td>
+              <td>{{ application.submitted_at|date:"d M Y" }}</td>
+              <td>
+                <a href="{% url 'bursary:application_review' application.pk %}" class="btn btn-sm btn-outline-primary">
+                  <i class="fas fa-edit"></i> Review
+                </a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="7" class="text-center">No pending applications.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

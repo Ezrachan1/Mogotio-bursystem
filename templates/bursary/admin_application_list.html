@@ -1,0 +1,275 @@
+{% extends 'base.html' %}
+
+{% block title %}Review Applications - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-clipboard-list"></i> Review Applications</h2>
+        <div>
+            <a href="{% url 'bursary:export_applications' %}?{{ request.GET.urlencode }}" class="btn btn-success">
+                <i class="fas fa-file-excel"></i> Export to CSV
+            </a>
+        </div>
+    </div>
+    
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-primary">{{ total_count }}</h3>
+                    <p class="mb-0">Total Applications</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-info">KES {{ total_requested|floatformat:0 }}</h3>
+                    <p class="mb-0">Total Requested</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-warning">{{ pending_count|default:0 }}</h3>
+                    <p class="mb-0">Pending Review</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-success">{{ approved_count|default:0 }}</h3>
+                    <p class="mb-0">Approved</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Filter Form -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" id="filterForm">
+                <div class="row">
+                    <div class="col-md-3">
+                        {{ filter_form.status.label_tag }}
+                        {{ filter_form.status }}
+                    </div>
+                    <div class="col-md-3">
+                        {{ filter_form.education_level.label_tag }}
+                        {{ filter_form.education_level }}
+                    </div>
+                    <div class="col-md-3">
+                        {{ filter_form.date_from.label_tag }}
+                        {{ filter_form.date_from }}
+                    </div>
+                    <div class="col-md-3">
+                        {{ filter_form.date_to.label_tag }}
+                        {{ filter_form.date_to }}
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-9">
+                        {{ filter_form.search }}
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-filter"></i> Apply Filters
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Applications Table -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>
+                                <input type="checkbox" id="selectAll">
+                            </th>
+                            <th>Application #</th>
+                            <th>Applicant</th>
+                            <th>Ward</th>
+                            <th>Education Level</th>
+                            <th>Institution</th>
+                            <th>Amount</th>
+                            <th>Score</th>
+                            <th>Status</th>
+                            <th>Submitted</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for app in applications %}
+                        <tr class="{% if app.status == 'submitted' %}table-warning{% endif %}">
+                            <td>
+                                <input type="checkbox" class="select-item" value="{{ app.pk }}">
+                            </td>
+                            <td>
+                                <a href="{% url 'bursary:admin_application_detail' app.pk %}">
+                                    {{ app.application_number }}
+                                </a>
+                            </td>
+                            <td>
+                                {{ app.applicant.get_full_name }}<br>
+                                <small class="text-muted">{{ app.applicant.phone_number }}</small>
+                            </td>
+                            <td>{{ app.applicant.ward }}</td>
+                            <td>{{ app.get_education_level_display }}</td>
+                            <td>{{ app.institution.name|default:app.institution_name_other|truncatechars:25 }}</td>
+                            <td>KES {{ app.amount_requested|floatformat:0 }}</td>
+                            <td>
+                                <span class="badge bg-{% if app.bursary_score >= 70 %}success{% elif app.bursary_score >= 50 %}warning{% else %}danger{% endif %}">
+                                    {{ app.bursary_score }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge badge-{{ app.status }}">
+                                    {{ app.get_status_display }}
+                                </span>
+                            </td>
+                            <td>{{ app.submitted_at|date:"d/m/Y" }}</td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'bursary:admin_application_detail' app.pk %}" 
+                                       class="btn btn-outline-primary" title="View">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'bursary:application_review' app.pk %}" 
+                                       class="btn btn-outline-warning" title="Review">
+                                        <i class="fas fa-gavel"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Bulk Actions -->
+            <div class="mt-3" id="bulkActions" style="display: none;">
+                <label>With selected:</label>
+                <button class="btn btn-sm btn-info" onclick="bulkAction('under_review')">
+                    Mark as Under Review
+                </button>
+                <button class="btn btn-sm btn-success" onclick="bulkAction('verified')">
+                    Mark as Verified
+                </button>
+            </div>
+            
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <nav aria-label="Page navigation" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1&{{ request.GET.urlencode }}">First</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}&{{ request.GET.urlencode }}">Previous</a>
+                        </li>
+                    {% endif %}
+                    
+                    <li class="page-item active">
+                        <span class="page-link">
+                            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                        </span>
+                    </li>
+                    
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}&{{ request.GET.urlencode }}">Next</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&{{ request.GET.urlencode }}">Last</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Select all functionality
+    const selectAll = document.getElementById('selectAll');
+    const selectItems = document.querySelectorAll('.select-item');
+    const bulkActions = document.getElementById('bulkActions');
+    
+    selectAll.addEventListener('change', function() {
+        selectItems.forEach(item => {
+            item.checked = this.checked;
+        });
+        toggleBulkActions();
+    });
+    
+    selectItems.forEach(item => {
+        item.addEventListener('change', toggleBulkActions);
+    });
+    
+    function toggleBulkActions() {
+        const checkedItems = document.querySelectorAll('.select-item:checked');
+        bulkActions.style.display = checkedItems.length > 0 ? 'block' : 'none';
+    }
+    
+    function bulkAction(action) {
+        const selected = Array.from(document.querySelectorAll('.select-item:checked'))
+            .map(item => item.value);
+        
+        if (selected.length === 0) {
+            alert('Please select at least one application');
+            return;
+        }
+        
+        if (confirm('Are you sure you want to mark ' + selected.length + ' applications as ' + action + '?')) {
+            // Submit bulk action
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{% url "bursary:admin_application_list" %}';
+            
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrfmiddlewaretoken';
+            csrfInput.value = '{{ csrf_token }}';
+            form.appendChild(csrfInput);
+            
+            const actionInput = document.createElement('input');
+            actionInput.type = 'hidden';
+            actionInput.name = 'bulk_action';
+            actionInput.value = action;
+            form.appendChild(actionInput);
+            
+            selected.forEach(id => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'selected_applications';
+                input.value = id;
+                form.appendChild(input);
+            });
+            
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+    
+    // Auto-submit filter form on change
+    const filterInputs = document.querySelectorAll('#filterForm select, #filterForm input[type="date"]');
+    filterInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            document.getElementById('filterForm').submit();
+        });
+    });
+</script>
+{% endblock %}

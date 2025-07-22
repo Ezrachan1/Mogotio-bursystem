@@ -1,0 +1,212 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Review Application - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <h2>Review Application: {{ application.application_number }}</h2>
+            
+            <!-- Quick Summary -->
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Quick Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>Applicant:</strong> {{ application.applicant.get_full_name }}<br>
+                            <strong>Ward:</strong> {{ application.applicant.ward }}<br>
+                            <strong>Education Level:</strong> {{ application.get_education_level_display }}<br>
+                            <strong>Institution:</strong> {{ application.institution.name|default:application.institution_name_other }}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Amount Requested:</strong> KES {{ application.amount_requested|floatformat:2 }}<br>
+                            <strong>Family Income:</strong> KES {{ application.family_monthly_income|floatformat:2 }}<br>
+                            <strong>Bursary Score:</strong> <span class="badge bg-primary">{{ bursary_score }}/100</span><br>
+                            <strong>Current Status:</strong> <span class="badge badge-{{ application.status }}">{{ application.get_status_display }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Review Form -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Review Decision</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="reviewForm">
+                        {% csrf_token %}
+                        {{ review_form|crispy }}
+                        
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i> 
+                            Please review all application details and documents before making a decision.
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'bursary:admin_application_detail' application.pk %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Details
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-save"></i> Submit Review
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <!-- Scoring Breakdown -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Scoring Breakdown</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tr>
+                            <td>Financial Need</td>
+                            <td class="text-end">
+                                {% if application.family_monthly_income < 10000 %}40{% elif application.family_monthly_income < 20000 %}30{% elif application.family_monthly_income < 30000 %}20{% else %}10{% endif %}/40
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Orphan Status</td>
+                            <td class="text-end">{% if application.is_orphan %}15{% else %}0{% endif %}/15</td>
+                        </tr>
+                        <tr>
+                            <td>Single Parent</td>
+                            <td class="text-end">{% if application.is_single_parent %}10{% else %}0{% endif %}/10</td>
+                        </tr>
+                        <tr>
+                            <td>Disability</td>
+                            <td class="text-end">{% if application.has_disability %}10{% else %}0{% endif %}/10</td>
+                        </tr>
+                        <tr>
+                            <td>Siblings Factor</td>
+                            <td class="text-end">
+                                {% if application.siblings_in_school > 3 %}20{% elif application.siblings_in_school > 1 %}10{% else %}0{% endif %}/20
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Education Level</td>
+                            <td class="text-end">
+                                {% if application.education_level == 'secondary' %}10{% elif application.education_level == 'tvet' %}8{% elif application.education_level == 'undergraduate' %}7{% elif application.education_level == 'primary' %}5{% else %}3{% endif %}/10
+                            </td>
+                        </tr>
+                        <tr class="table-primary">
+                            <th>Total Score</th>
+                            <th class="text-end">{{ bursary_score }}/100</th>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Documents Checklist -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Documents Checklist</h5>
+                </div>
+                <div class="card-body">
+                    {% for doc in application.documents.all %}
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" checked disabled>
+                            <label class="form-check-label">
+                                {{ doc.get_document_type_display }}
+                                <a href="{% url 'bursary:document_download' application.pk doc.pk %}" 
+                                   class="btn btn-sm btn-link">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                            </label>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Previous Review History -->
+            {% if application.status_logs.exists %}
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Review History</h5>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        {% for log in application.status_logs.all|slice:":5" %}
+                        <div class="timeline-item">
+                            <small class="text-muted">{{ log.created_at|date:"d M Y, g:i A" }}</small>
+                            <p class="mb-0">
+                                <strong>{{ log.get_new_status_display }}</strong>
+                                {% if log.changed_by %}
+                                    by {{ log.changed_by.get_full_name }}
+                                {% endif %}
+                            </p>
+                            {% if log.comment %}
+                                <small class="text-muted">{{ log.comment }}</small>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Show/hide fields based on status selection
+    const statusRadios = document.querySelectorAll('input[name="status"]');
+    const approvedAmountDiv = document.getElementById('div_id_approved_amount');
+    const rejectionReasonDiv = document.getElementById('div_id_rejection_reason');
+    
+    statusRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.value === 'approved') {
+                approvedAmountDiv.style.display = 'block';
+                rejectionReasonDiv.style.display = 'none';
+                document.getElementById('id_approved_amount').required = true;
+                document.getElementById('id_rejection_reason').required = false;
+            } else if (this.value === 'rejected') {
+                approvedAmountDiv.style.display = 'none';
+                rejectionReasonDiv.style.display = 'block';
+                document.getElementById('id_approved_amount').required = false;
+                document.getElementById('id_rejection_reason').required = true;
+            } else {
+                approvedAmountDiv.style.display = 'none';
+                rejectionReasonDiv.style.display = 'none';
+                document.getElementById('id_approved_amount').required = false;
+                document.getElementById('id_rejection_reason').required = false;
+            }
+        });
+    });
+    
+    // Confirm before submission
+    document.getElementById('reviewForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const selectedStatus = document.querySelector('input[name="status"]:checked');
+        if (!selectedStatus) {
+            alert('Please select a review decision');
+            return;
+        }
+        
+        const decision = selectedStatus.value;
+        let message = `Are you sure you want to mark this application as ${decision}?`;
+        
+        if (decision === 'approved') {
+            const amount = document.getElementById('id_approved_amount').value;
+            message += `\n\nApproved Amount: KES ${parseFloat(amount).toFixed(2)}`;
+        }
+        
+        if (confirm(message)) {
+            this.submit();
+        }
+    });
+</script>
+{% endblock %}

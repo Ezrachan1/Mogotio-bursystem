@@ -1,0 +1,247 @@
+{% extends 'base.html' %}
+
+{% block title %}Disbursement {{ disbursement.reference_number }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2>Disbursement Details</h2>
+                    <p class="text-muted mb-0">Reference: <strong>{{ disbursement.reference_number }}</strong></p>
+                </div>
+                <div>
+                    <a href="{% url 'bursary:disbursement_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to List
+                    </a>
+                    <button onclick="window.print()" class="btn btn-outline-secondary">
+                        <i class="fas fa-print"></i> Print Receipt
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Main Details Card -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-check-circle"></i> Disbursement Processed Successfully
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Payment Information</h6>
+                            <table class="table table-sm">
+                                <tr>
+                                    <td><strong>Amount:</strong></td>
+                                    <td class="text-success">
+                                        <h4 class="mb-0">KES {{ disbursement.amount|floatformat:2 }}</h4>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Payment Method:</strong></td>
+                                    <td>
+                                        {% if disbursement.payment_method == 'bank_transfer' %}
+                                            <span class="badge bg-primary"><i class="fas fa-university"></i> Bank Transfer</span>
+                                        {% elif disbursement.payment_method == 'cheque' %}
+                                            <span class="badge bg-info"><i class="fas fa-money-check"></i> Cheque</span>
+                                        {% elif disbursement.payment_method == 'mpesa' %}
+                                            <span class="badge bg-success"><i class="fas fa-mobile-alt"></i> M-PESA</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary"><i class="fas fa-money-bill"></i> Cash</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Reference Number:</strong></td>
+                                    <td><code>{{ disbursement.reference_number }}</code></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Payment Date:</strong></td>
+                                    <td>{{ disbursement.payment_date|date:"d M Y" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Paid To:</strong></td>
+                                    <td>{{ disbursement.paid_to }}</td>
+                                </tr>
+                                {% if disbursement.receipt_number %}
+                                <tr>
+                                    <td><strong>Receipt Number:</strong></td>
+                                    <td>{{ disbursement.receipt_number }}</td>
+                                </tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Processing Information</h6>
+                            <table class="table table-sm">
+                                <tr>
+                                    <td><strong>Processed By:</strong></td>
+                                    <td>{{ disbursement.processed_by.get_full_name }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Processed On:</strong></td>
+                                    <td>{{ disbursement.created_at|date:"d M Y, g:i A" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Department:</strong></td>
+                                    <td>{{ disbursement.processed_by.get_role_display|default:"Finance" }}</td>
+                                </tr>
+                            </table>
+                            
+                            {% if disbursement.notes %}
+                            <h6 class="text-muted mt-3">Notes</h6>
+                            <div class="alert alert-light">
+                                {{ disbursement.notes|linebreaks }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Application Details Card -->
+            <div class="card shadow">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-file-alt"></i> Related Application
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Application Information</h6>
+                            <table class="table table-sm">
+                                <tr>
+                                    <td><strong>Application Number:</strong></td>
+                                    <td>
+                                        <a href="{% url 'bursary:application_detail' disbursement.application.pk %}">
+                                            {{ disbursement.application.application_number }}
+                                        </a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Academic Year:</strong></td>
+                                    <td>{{ disbursement.application.academic_year.year }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Education Level:</strong></td>
+                                    <td>{{ disbursement.application.get_education_level_display }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Institution:</strong></td>
+                                    <td>{{ disbursement.application.institution.name|default:disbursement.application.institution_name_other }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Beneficiary Information</h6>
+                            <table class="table table-sm">
+                                <tr>
+                                    <td><strong>Name:</strong></td>
+                                    <td>{{ disbursement.application.applicant.get_full_name }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>ID Number:</strong></td>
+                                    <td>{{ disbursement.application.applicant.id_number }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Phone:</strong></td>
+                                    <td>{{ disbursement.application.applicant.phone_number }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Ward:</strong></td>
+                                    <td>{{ disbursement.application.applicant.ward }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Financial Summary -->
+                    <hr>
+                    <h6 class="text-muted">Financial Summary</h6>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <small class="text-muted">Total Fees</small>
+                                <h5>KES {{ disbursement.application.total_fees|floatformat:2 }}</h5>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <small class="text-muted">Approved Amount</small>
+                                <h5 class="text-primary">KES {{ disbursement.application.approved_amount|floatformat:2 }}</h5>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <small class="text-muted">Disbursed Amount</small>
+                                <h5 class="text-success">KES {{ disbursement.amount|floatformat:2 }}</h5>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Receipt Section (for printing) -->
+            <div class="card mt-4 d-none d-print-block">
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <h3>{{ CONSTITUENCY_NAME }}</h3>
+                        <h4>Bursary Disbursement Receipt</h4>
+                        <p>Reference: {{ disbursement.reference_number }}</p>
+                    </div>
+                    
+                    <table class="table">
+                        <tr>
+                            <td><strong>Date:</strong></td>
+                            <td>{{ disbursement.payment_date|date:"d M Y" }}</td>
+                            <td><strong>Amount:</strong></td>
+                            <td>KES {{ disbursement.amount|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Beneficiary:</strong></td>
+                            <td>{{ disbursement.application.applicant.get_full_name }}</td>
+                            <td><strong>ID Number:</strong></td>
+                            <td>{{ disbursement.application.applicant.id_number }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Institution:</strong></td>
+                            <td colspan="3">{{ disbursement.application.institution.name|default:disbursement.application.institution_name_other }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Payment Method:</strong></td>
+                            <td>{{ disbursement.get_payment_method_display }}</td>
+                            <td><strong>Receipt No:</strong></td>
+                            <td>{{ disbursement.receipt_number|default:"-" }}</td>
+                        </tr>
+                    </table>
+                    
+                    <div class="mt-5">
+                        <div class="row">
+                            <div class="col-6">
+                                <p>_____________________<br>Authorized Signature</p>
+                            </div>
+                            <div class="col-6 text-end">
+                                <p>_____________________<br>Date</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+@media print {
+    .navbar, .btn, .d-print-none { display: none !important; }
+    .d-print-block { display: block !important; }
+    .card { border: 1px solid #000 !important; }
+}
+</style>
+{% endblock %}

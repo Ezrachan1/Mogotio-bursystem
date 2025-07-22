@@ -1,0 +1,298 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Upload Documents - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <!-- Progress Steps -->
+            <div class="progress-steps mb-4">
+                <div class="progress-step completed">
+                    <div class="progress-step-icon">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <small>Application Form</small>
+                </div>
+                <div class="progress-step active">
+                    <div class="progress-step-icon">
+                        <i class="fas fa-upload"></i>
+                    </div>
+                    <small>Upload Documents</small>
+                </div>
+                <div class="progress-step">
+                    <div class="progress-step-icon">
+                        <i class="fas fa-paper-plane"></i>
+                    </div>
+                    <small>Submit</small>
+                </div>
+            </div>
+            
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-cloud-upload-alt"></i> Upload Supporting Documents
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle"></i> Document Requirements</h6>
+                        <ul class="mb-0">
+                            <li>Maximum file size: 10MB per document</li>
+                            <li>Accepted formats: PDF, JPG, JPEG, PNG</li>
+                            <li>Ensure documents are clear and readable</li>
+                            <li>Upload all required documents before submitting</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Required Documents Checklist -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Required Documents</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                {% for doc_type, doc_name in required_docs %}
+                                <div class="col-md-6 mb-2">
+                                    <div class="form-check">
+                                        {% if doc_type in documents.values_list.document_type.distinct %}
+                                            <input class="form-check-input" type="checkbox" checked disabled>
+                                            <label class="form-check-label text-success">
+                                                <i class="fas fa-check-circle"></i> {{ doc_name }}
+                                            </label>
+                                        {% else %}
+                                            <input class="form-check-input" type="checkbox" disabled>
+                                            <label class="form-check-label text-danger">
+                                                <i class="fas fa-times-circle"></i> {{ doc_name }}
+                                            </label>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            
+                            {% if optional_docs %}
+                            <hr>
+                            <h6>Additional Documents (Based on your circumstances)</h6>
+                            <div class="row">
+                                {% for doc_type, doc_name in optional_docs %}
+                                <div class="col-md-6 mb-2">
+                                    <div class="form-check">
+                                        {% if doc_type in documents.values_list.document_type.distinct %}
+                                            <input class="form-check-input" type="checkbox" checked disabled>
+                                            <label class="form-check-label text-success">
+                                                <i class="fas fa-check-circle"></i> {{ doc_name }}
+                                            </label>
+                                        {% else %}
+                                            <input class="form-check-input" type="checkbox" disabled>
+                                            <label class="form-check-label text-muted">
+                                                <i class="fas fa-circle"></i> {{ doc_name }}
+                                            </label>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Upload Form -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Upload New Document</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="post" enctype="multipart/form-data" id="uploadForm">
+                                {% csrf_token %}
+                                {{ form|crispy }}
+                                
+                                <div id="filePreview" class="mb-3" style="display: none;">
+                                    <h6>Preview:</h6>
+                                    <img id="imagePreview" class="img-thumbnail" style="max-width: 200px; display: none;">
+                                    <div id="fileInfo" class="alert alert-secondary"></div>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-upload"></i> Upload Document
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Uploaded Documents -->
+                    {% if documents %}
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Uploaded Documents ({{ documents.count }})</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Document Type</th>
+                                            <th>Description</th>
+                                            <th>Size</th>
+                                            <th>Uploaded</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for doc in documents %}
+                                        <tr>
+                                            <td>{{ doc.get_document_type_display }}</td>
+                                            <td>{{ doc.description|default:"-" }}</td>
+                                            <td>{{ doc.file.size|filesizeformat }}</td>
+                                            <td>{{ doc.uploaded_at|date:"d M Y" }}</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-primary preview-btn" 
+                                                        data-file="{{ doc.file.url }}" 
+                                                        data-type="{{ doc.file_extension }}">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <form method="post" action="{% url 'bursary:document_delete' doc.pk %}" 
+                                                      style="display: inline;">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger delete-confirm">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Action Buttons -->
+                    <div class="mt-4 d-flex justify-content-between">
+                        <a href="{% url 'bursary:application_update' application.pk %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Application
+                        </a>
+                        
+                        {% if application.status == 'draft' %}
+                            <form method="post" action="{% url 'bursary:application_submit' application.pk %}" 
+                                  style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-success btn-lg" id="submitBtn">
+                                    <i class="fas fa-paper-plane"></i> Submit Application
+                                </button>
+                            </form>
+                        {% else %}
+                            <a href="{% url 'bursary:application_detail' application.pk %}" class="btn btn-primary">
+                                <i class="fas fa-check"></i> Done
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Preview Modal -->
+<div class="modal fade" id="previewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Document Preview</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="modalImage" class="img-fluid" style="display: none;">
+                <embed id="modalPdf" width="100%" height="600px" style="display: none;">
+                <p id="modalError" class="text-muted" style="display: none;">
+                    Preview not available for this file type.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // File preview on selection
+    const fileInput = document.getElementById('id_file');
+    const filePreview = document.getElementById('filePreview');
+    const imagePreview = document.getElementById('imagePreview');
+    const fileInfo = document.getElementById('fileInfo');
+    
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            filePreview.style.display = 'block';
+            fileInfo.innerHTML = `
+                <strong>File:</strong> ${file.name}<br>
+                <strong>Size:</strong> ${(file.size / 1024 / 1024).toFixed(2)} MB<br>
+                <strong>Type:</strong> ${file.type}
+            `;
+            
+            // Show image preview if it's an image
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imagePreview.src = e.target.result;
+                    imagePreview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                imagePreview.style.display = 'none';
+            }
+        }
+    });
+    
+    // Document preview modal
+    const previewBtns = document.querySelectorAll('.preview-btn');
+    const modal = new bootstrap.Modal(document.getElementById('previewModal'));
+    const modalImage = document.getElementById('modalImage');
+    const modalPdf = document.getElementById('modalPdf');
+    const modalError = document.getElementById('modalError');
+    
+    previewBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const fileUrl = this.dataset.file;
+            const fileType = this.dataset.type;
+            
+            // Reset modal content
+            modalImage.style.display = 'none';
+            modalPdf.style.display = 'none';
+            modalError.style.display = 'none';
+            
+            if (['.jpg', '.jpeg', '.png'].includes(fileType)) {
+                modalImage.src = fileUrl;
+                modalImage.style.display = 'block';
+            } else if (fileType === '.pdf') {
+                modalPdf.src = fileUrl;
+                modalPdf.style.display = 'block';
+            } else {
+                modalError.style.display = 'block';
+            }
+            
+            modal.show();
+        });
+    });
+    
+    // Check required documents before submission
+    const submitBtn = document.getElementById('submitBtn');
+    if (submitBtn) {
+        submitBtn.addEventListener('click', function(e) {
+            const requiredDocs = parseInt('{{ required_docs|length }}') || 3;
+            const uploadedRequired = document.querySelectorAll('.form-check-input:checked:disabled').length;
+            
+            if (uploadedRequired < requiredDocs) {
+                e.preventDefault();
+                if (confirm('You have not uploaded all required documents. Do you want to continue?')) {
+                    // Allow submission
+                    this.closest('form').submit();
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}

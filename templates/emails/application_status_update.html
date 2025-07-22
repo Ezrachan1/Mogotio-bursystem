@@ -1,0 +1,107 @@
+{% extends 'emails/base_email.html' %}
+
+{% block title %}Application Status Update - {{ block.super }}{% endblock %}
+
+{% block content %}
+<h2>Dear {{ user.first_name }},</h2>
+
+<p>We are writing to inform you that the status of your bursary application has been updated.</p>
+
+<div class="{% if application.status == 'approved' %}success-box{% elif application.status == 'rejected' %}danger-box{% else %}info-box{% endif %}">
+    <h3>Status Update</h3>
+    <p>
+        <strong>Application Number:</strong> {{ application.application_number }}<br>
+        <strong>Previous Status:</strong> {{ old_status|title }}<br>
+        <strong>New Status:</strong> <strong>{{ application.get_status_display }}</strong><br>
+        <strong>Updated On:</strong> {{ application.updated_at|date:"d M Y, g:i A" }}
+    </p>
+</div>
+
+{% if application.status == 'under_review' %}
+    <h3>Your Application is Under Review</h3>
+    <p>Our bursary committee has started reviewing your application. This process involves:</p>
+    <ul>
+        <li>Verification of submitted documents</li>
+        <li>Assessment of financial need</li>
+        <li>Evaluation based on our selection criteria</li>
+    </ul>
+    <p>We will notify you once the review is complete.</p>
+
+{% elif application.status == 'verified' %}
+    <h3>Your Application Has Been Verified</h3>
+    <p>Good news! Your application and all supporting documents have been verified successfully. Your application is now in the final stage of approval.</p>
+    <p>The committee will make the final decision soon, and you will be notified of the outcome.</p>
+
+{% elif application.status == 'approved' %}
+    <h3>🎉 Congratulations! Your Application Has Been Approved</h3>
+    <p>We are pleased to inform you that your bursary application has been approved!</p>
+    
+    <div class="success-box">
+        <h4>Approval Details</h4>
+        <p>
+            <strong>Amount Approved:</strong> KES {{ application.approved_amount|floatformat:2 }}<br>
+            <strong>Approved By:</strong> {{ application.approved_by.get_full_name }}<br>
+            <strong>Approval Date:</strong> {{ application.approved_at|date:"d M Y" }}
+        </p>
+    </div>
+    
+    <h4>Next Steps:</h4>
+    <ol>
+        <li>The approved amount will be disbursed directly to your institution</li>
+        <li>You will receive another notification once the disbursement is processed</li>
+        <li>Contact your institution's finance office after 5-7 business days to confirm receipt</li>
+    </ol>
+
+{% elif application.status == 'rejected' %}
+    <h3>Application Not Successful</h3>
+    <p>We regret to inform you that your bursary application was not successful in this round.</p>
+    
+    {% if application.rejection_reason %}
+    <div class="danger-box">
+        <h4>Reason for Rejection:</h4>
+        <p>{{ application.rejection_reason }}</p>
+    </div>
+    {% endif %}
+    
+    <p>Please note that you may be eligible to apply again in the next application period. We encourage you to:</p>
+    <ul>
+        <li>Review the eligibility criteria carefully</li>
+        <li>Ensure all required documents are complete and valid</li>
+        <li>Apply early in the next application window</li>
+    </ul>
+
+{% elif application.status == 'disbursed' %}
+    <h3>✅ Funds Have Been Disbursed</h3>
+    <p>Great news! The bursary funds have been successfully disbursed.</p>
+    
+    <div class="success-box">
+        <h4>Disbursement Details</h4>
+        <p>
+            The approved amount of <strong>KES {{ application.approved_amount|floatformat:2 }}</strong> has been sent to your institution.<br>
+            Please liaise with your institution's finance office to confirm receipt and application of the funds to your fee account.
+        </p>
+    </div>
+    
+    <p>Thank you for choosing to apply for the {{ constituency_name }} Bursary. We wish you all the best in your studies!</p>
+{% endif %}
+
+<p>You can view more details about your application by logging into your account:</p>
+
+<center>
+    <a href="{{ domain }}{% url 'bursary:application_detail' application.pk %}" class="button">
+        View Application Details
+    </a>
+</center>
+
+{% if application.reviewer_comments %}
+<h3>Additional Comments:</h3>
+<p>{{ application.reviewer_comments }}</p>
+{% endif %}
+
+<p>If you have any questions about this update, please don't hesitate to contact us.</p>
+
+<p>
+    Best regards,<br>
+    <strong>{{ constituency_name }} Bursary Committee</strong>
+</p>
+{% endblock %}

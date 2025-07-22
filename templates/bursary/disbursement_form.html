@@ -1,0 +1,259 @@
+{% extends 'base.html' %}
+
+{% block title %}Process Disbursement - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-money-check-alt"></i> Process Disbursement
+                    </h4>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Application Selection -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">Select Application</h5>
+                            </div>
+                            <div class="card-body">
+                                {% if pending_applications %}
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-info-circle"></i> 
+                                        Only approved applications without disbursements are shown below.
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="id_application" class="form-label">
+                                            Application <span class="text-danger">*</span>
+                                        </label>
+                                        <select class="form-select" id="id_application" name="application" required>
+                                            <option value="">Select an application</option>
+                                            {% for app in pending_applications %}
+                                                <option value="{{ app.pk }}" 
+                                                        data-amount="{{ app.approved_amount }}"
+                                                        data-institution="{{ app.institution.name|default:app.institution_name_other }}"
+                                                        data-applicant="{{ app.applicant.get_full_name }}">
+                                                    {{ app.application_number }} - {{ app.applicant.get_full_name }} 
+                                                    ({{ app.institution.name|default:app.institution_name_other|truncatechars:30 }}) 
+                                                    - KES {{ app.approved_amount|floatformat:2 }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                        <div class="invalid-feedback">
+                                            Please select an application to process.
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Application Details Display -->
+                                    <div id="applicationDetails" class="alert alert-light" style="display: none;">
+                                        <h6>Application Details</h6>
+                                        <p class="mb-1">Applicant: <strong id="applicantName">-</strong></p>
+                                        <p class="mb-1">Institution: <strong id="institutionName">-</strong></p>
+                                        <p class="mb-0">Approved Amount: <strong id="approvedAmount" class="text-success">-</strong></p>
+                                    </div>
+                                {% else %}
+                                    <div class="alert alert-warning">
+                                        <i class="fas fa-exclamation-triangle"></i> 
+                                        No approved applications pending disbursement.
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if pending_applications %}
+                        <!-- Payment Information -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">Payment Information</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="id_amount" class="form-label">
+                                            Amount to Disburse (KES) <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="number" class="form-control" id="id_amount" name="amount" 
+                                               step="0.01" min="0" required>
+                                        <div class="invalid-feedback">
+                                            Please enter a valid amount.
+                                        </div>
+                                        <small class="text-muted">This will be auto-filled based on selected application.</small>
+                                    </div>
+                                    
+                                    <div class="col-md-6 mb-3">
+                                        <label for="id_payment_method" class="form-label">
+                                            Payment Method <span class="text-danger">*</span>
+                                        </label>
+                                        <select class="form-select" id="id_payment_method" name="payment_method" required>
+                                            <option value="">Select payment method</option>
+                                            <option value="bank_transfer">Bank Transfer</option>
+                                            <option value="cheque">Cheque</option>
+                                            <option value="mpesa">M-PESA</option>
+                                            <option value="cash">Cash</option>
+                                        </select>
+                                        <div class="invalid-feedback">
+                                            Please select a payment method.
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="id_reference_number" class="form-label">
+                                            Reference Number <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text" class="form-control" id="id_reference_number" 
+                                               name="reference_number" required>
+                                        <div class="invalid-feedback">
+                                            Please enter a reference number.
+                                        </div>
+                                        <small class="text-muted">Transaction reference, cheque number, or M-PESA code</small>
+                                    </div>
+                                    
+                                    <div class="col-md-6 mb-3">
+                                        <label for="id_payment_date" class="form-label">
+                                            Payment Date <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="date" class="form-control" id="id_payment_date" 
+                                               name="payment_date" value="{% now 'Y-m-d' %}" required>
+                                        <div class="invalid-feedback">
+                                            Please select the payment date.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Recipient Information -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">Recipient Information</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="id_paid_to" class="form-label">
+                                            Paid To <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text" class="form-control" id="id_paid_to" 
+                                               name="paid_to" required>
+                                        <div class="invalid-feedback">
+                                            Please enter the recipient name.
+                                        </div>
+                                        <small class="text-muted">Institution name or recipient</small>
+                                    </div>
+                                    
+                                    <div class="col-md-6 mb-3">
+                                        <label for="id_receipt_number" class="form-label">
+                                            Receipt Number <small class="text-muted">(Optional)</small>
+                                        </label>
+                                        <input type="text" class="form-control" id="id_receipt_number" 
+                                               name="receipt_number">
+                                        <small class="text-muted">Receipt number from institution</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="id_notes" class="form-label">
+                                        Notes <small class="text-muted">(Optional)</small>
+                                    </label>
+                                    <textarea class="form-control" id="id_notes" name="notes" rows="3"></textarea>
+                                    <small class="text-muted">Any additional information about this disbursement</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'bursary:disbursement_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-check"></i> Process Disbursement
+                            </button>
+                        </div>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Form validation
+    (function() {
+        'use strict';
+        var forms = document.querySelectorAll('.needs-validation');
+        Array.prototype.slice.call(forms).forEach(function(form) {
+            form.addEventListener('submit', function(event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    })();
+    
+    // Application selection handling
+    const applicationSelect = document.getElementById('id_application');
+    const applicationDetails = document.getElementById('applicationDetails');
+    const amountInput = document.getElementById('id_amount');
+    const paidToInput = document.getElementById('id_paid_to');
+    
+    if (applicationSelect) {
+        applicationSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            
+            if (this.value) {
+                // Show application details
+                applicationDetails.style.display = 'block';
+                document.getElementById('applicantName').textContent = selectedOption.dataset.applicant;
+                document.getElementById('institutionName').textContent = selectedOption.dataset.institution;
+                document.getElementById('approvedAmount').textContent = 'KES ' + parseFloat(selectedOption.dataset.amount).toFixed(2);
+                
+                // Auto-fill fields
+                amountInput.value = selectedOption.dataset.amount;
+                paidToInput.value = selectedOption.dataset.institution;
+            } else {
+                applicationDetails.style.display = 'none';
+                amountInput.value = '';
+                paidToInput.value = '';
+            }
+        });
+    }
+    
+    // Confirmation before submission
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const amount = parseFloat(amountInput.value);
+        const paymentMethod = document.getElementById('id_payment_method').value;
+        const reference = document.getElementById('id_reference_number').value;
+        
+        if (confirm(`Please confirm disbursement:\n\nAmount: KES ${amount.toFixed(2)}\nMethod: ${paymentMethod}\nReference: ${reference}\n\nProceed with disbursement?`)) {
+            this.submit();
+        }
+    });
+</script>
+{% endblock %}

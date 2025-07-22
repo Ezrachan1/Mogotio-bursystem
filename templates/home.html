@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+
+{% block title %}Home - Constituency Bursary System{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="bg-primary text-white py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="display-4 fw-bold">{{ CONSTITUENCY_NAME|default:"Constituency" }} Bursary Fund</h1>
+                <p class="lead">Supporting bright minds in our community through educational funding</p>
+                {% if not user.is_authenticated %}
+                    <div class="mt-4">
+                        <a href="{% url 'accounts:register' %}" class="btn btn-light btn-lg me-3">
+                            <i class="fas fa-user-plus"></i> Apply Now
+                        </a>
+                        <a href="{% url 'accounts:login' %}" class="btn btn-outline-light btn-lg">
+                            <i class="fas fa-sign-in-alt"></i> Login
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="mt-4">
+                        <a href="{% url 'bursary:dashboard' %}" class="btn btn-light btn-lg">
+                            <i class="fas fa-tachometer-alt"></i> Go to Dashboard
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="col-lg-4 text-center">
+                <i class="fas fa-graduation-cap" style="font-size: 150px; opacity: 0.8;"></i>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-5">How It Works</h2>
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <i class="fas fa-user-plus text-primary" style="font-size: 48px;"></i>
+                        </div>
+                        <h4>1. Register</h4>
+                        <p>Create your account with your personal details and verify your phone number</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <i class="fas fa-file-alt text-primary" style="font-size: 48px;"></i>
+                        </div>
+                        <h4>2. Apply</h4>
+                        <p>Fill in the application form and upload required documents</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <i class="fas fa-check-circle text-primary" style="font-size: 48px;"></i>
+                        </div>
+                        <h4>3. Get Funded</h4>
+                        <p>Track your application status and receive funding upon approval</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Eligibility Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-6">
+                <h2>Who Can Apply?</h2>
+                <p class="lead">The bursary fund is available to:</p>
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success"></i> 
+                        Students residing in {{ CONSTITUENCY_NAME|default:"our constituency" }}
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success"></i> 
+                        Students enrolled in recognized educational institutions
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success"></i> 
+                        Students from financially disadvantaged backgrounds
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success"></i> 
+                        Students in primary, secondary, TVET, or university education
+                    </li>
+                </ul>
+            </div>
+            <div class="col-lg-6">
+                <h2>Required Documents</h2>
+                <p class="lead">You will need to upload:</p>
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <i class="fas fa-file text-primary"></i> 
+                        Admission letter or student ID
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-file text-primary"></i> 
+                        Fee structure from your institution
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-file text-primary"></i> 
+                        Copy of your national ID or birth certificate
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-file text-primary"></i> 
+                        Parent/Guardian ID copy
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-file text-primary"></i> 
+                        Any other supporting documents
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Statistics Section -->
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-5">Our Impact</h2>
+        <div class="row text-center">
+            <div class="col-md-3 mb-4">
+                <div class="display-4 text-primary fw-bold">500+</div>
+                <p class="lead">Students Supported</p>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="display-4 text-primary fw-bold">KES 10M+</div>
+                <p class="lead">Funds Disbursed</p>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="display-4 text-primary fw-bold">50+</div>
+                <p class="lead">Partner Institutions</p>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="display-4 text-primary fw-bold">95%</div>
+                <p class="lead">Success Rate</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="py-5 bg-primary text-white">
+    <div class="container text-center">
+        <h2 class="mb-4">Ready to Apply for Bursary?</h2>
+        <p class="lead mb-4">Start your application today and secure funding for your education</p>
+        {% if not user.is_authenticated %}
+            <a href="{% url 'accounts:register' %}" class="btn btn-light btn-lg">
+                <i class="fas fa-rocket"></i> Get Started
+            </a>
+        {% else %}
+            <a href="{% url 'bursary:application_create' %}" class="btn btn-light btn-lg">
+                <i class="fas fa-plus"></i> New Application
+            </a>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

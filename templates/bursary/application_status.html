@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+
+{% block title %}Track Application Status - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-search"></i> Application Status Tracking
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- Application Info -->
+                    <div class="alert alert-info">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>Application Number:</strong> {{ application.application_number }}<br>
+                                <strong>Academic Year:</strong> {{ application.academic_year.year }}
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Current Status:</strong> 
+                                <span class="badge badge-{{ application.status }} fs-6">
+                                    {{ application.get_status_display }}
+                                </span><br>
+                                <strong>Last Updated:</strong> {{ application.updated_at|date:"d M Y, g:i A" }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Status Progress -->
+                    <div class="progress mb-4" style="height: 30px;">
+                        {% if application.status == 'draft' %}
+                            <div class="progress-bar bg-secondary" role="progressbar" style="width: 10%">
+                                Draft
+                            </div>
+                        {% elif application.status == 'submitted' %}
+                            <div class="progress-bar bg-info" role="progressbar" style="width: 25%">
+                                Submitted
+                            </div>
+                        {% elif application.status == 'under_review' %}
+                            <div class="progress-bar bg-warning" role="progressbar" style="width: 50%">
+                                Under Review
+                            </div>
+                        {% elif application.status == 'verified' %}
+                            <div class="progress-bar bg-primary" role="progressbar" style="width: 65%">
+                                Verified
+                            </div>
+                        {% elif application.status == 'approved' %}
+                            <div class="progress-bar bg-success" role="progressbar" style="width: 85%">
+                                Approved
+                            </div>
+                        {% elif application.status == 'rejected' %}
+                            <div class="progress-bar bg-danger" role="progressbar" style="width: 100%">
+                                Rejected
+                            </div>
+                        {% elif application.status == 'disbursed' %}
+                            <div class="progress-bar bg-success" role="progressbar" style="width: 100%">
+                                Disbursed
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Status Timeline -->
+                    <h5 class="mb-3">Status History</h5>
+                    <div class="timeline">
+                        {% for log in status_logs %}
+                        <div class="timeline-item">
+                            <div class="timeline-marker {% if forloop.first %}bg-primary{% else %}bg-secondary{% endif %}"></div>
+                            <div class="timeline-content">
+                                <h6 class="mb-1">
+                                    {{ log.get_new_status_display }}
+                                    <span class="badge badge-{{ log.new_status }} ms-2">
+                                        {{ log.new_status|upper }}
+                                    </span>
+                                </h6>
+                                <p class="text-muted mb-1">
+                                    <i class="fas fa-clock"></i> {{ log.created_at|date:"d M Y, g:i A" }}
+                                    {% if log.changed_by %}
+                                        • <i class="fas fa-user"></i> {{ log.changed_by.get_full_name }}
+                                    {% endif %}
+                                </p>
+                                {% if log.comment %}
+                                    <p class="mb-0 text-secondary">
+                                        <i class="fas fa-comment"></i> {{ log.comment }}
+                                    </p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-muted">No status updates available.</p>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Status Explanation -->
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h6 class="mb-0">What does this status mean?</h6>
+                        </div>
+                        <div class="card-body">
+                            {% if application.status == 'draft' %}
+                                <p>Your application is saved as a draft. You need to complete and submit it for review.</p>
+                                <a href="{% url 'bursary:application_update' application.pk %}" class="btn btn-primary">
+                                    Complete Application
+                                </a>
+                            {% elif application.status == 'submitted' %}
+                                <p>Your application has been received and is waiting to be reviewed by our team. You will be notified once the review begins.</p>
+                            {% elif application.status == 'under_review' %}
+                                <p>Your application is currently being reviewed by our bursary committee. This process may take a few days.</p>
+                            {% elif application.status == 'verified' %}
+                                <p>Your application has been verified and all documents are in order. It is now awaiting final approval.</p>
+                            {% elif application.status == 'approved' %}
+                                <p class="text-success">
+                                    <strong>Congratulations!</strong> Your application has been approved. 
+                                    {% if application.approved_amount %}
+                                        You have been awarded <strong>KES {{ application.approved_amount|floatformat:2 }}</strong>.
+                                    {% endif %}
+                                    The disbursement process will begin soon.
+                                </p>
+                            {% elif application.status == 'rejected' %}
+                                <p class="text-danger">
+                                    Unfortunately, your application was not successful. 
+                                    {% if application.rejection_reason %}
+                                        <br><strong>Reason:</strong> {{ application.rejection_reason }}
+                                    {% endif %}
+                                </p>
+                                <p>You may apply again in the next application period if you meet the eligibility criteria.</p>
+                            {% elif application.status == 'disbursed' %}
+                                <p class="text-success">
+                                    <strong>Funds have been disbursed!</strong> The bursary amount has been sent to your institution. 
+                                    Please check with your institution's finance office for confirmation.
+                                </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Actions -->
+                    <div class="mt-4 text-center">
+                        <a href="{% url 'bursary:application_detail' application.pk %}" class="btn btn-primary">
+                            <i class="fas fa-eye"></i> View Full Application
+                        </a>
+                        <a href="{% url 'bursary:application_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-list"></i> Back to Applications
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 9px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: #dee2e6;
+}
+
+.timeline-item {
+    position: relative;
+    padding-bottom: 30px;
+}
+
+.timeline-item:last-child {
+    padding-bottom: 0;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -21px;
+    top: 5px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    box-shadow: 0 0 0 2px #dee2e6;
+}
+
+.timeline-content {
+    padding-left: 10px;
+}
+</style>
+{% endblock %}

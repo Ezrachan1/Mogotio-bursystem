@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block title %}Page Not Found - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center mt-5">
+        <div class="col-md-6 text-center">
+            <div class="error-template">
+                <h1 class="display-1 text-muted">404</h1>
+                <h2>Oops! Page Not Found</h2>
+                <p class="text-muted">
+                    Sorry, the page you are looking for doesn't exist or has been moved.
+                </p>
+                
+                <div class="error-actions mt-4">
+                    <a href="{% url 'home' %}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-home"></i> Go to Homepage
+                    </a>
+                    <a href="javascript:history.back()" class="btn btn-secondary btn-lg">
+                        <i class="fas fa-arrow-left"></i> Go Back
+                    </a>
+                </div>
+                
+                <div class="mt-5">
+                    <p class="text-muted">
+                        Need help? Contact us at:<br>
+                        <i class="fas fa-envelope"></i> {{ CONSTITUENCY_EMAIL }}<br>
+                        <i class="fas fa-phone"></i> {{ CONSTITUENCY_PHONE }}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.error-template {
+    padding: 40px 15px;
+}
+.error-template .display-1 {
+    font-size: 120px;
+    font-weight: 300;
+}
+</style>
+{% endblock %}

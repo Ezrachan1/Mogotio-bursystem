@@ -1,0 +1,295 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Edit Profile - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-user-edit"></i> Edit Profile
+                    </h4>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Basic Information -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">Basic Information</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        {{ user_form.first_name|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        {{ user_form.last_name|as_crispy_field }}
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        {{ user_form.email|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        {{ user_form.date_of_birth|as_crispy_field }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Location Information -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">Location Information</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        {{ user_form.ward|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        {{ user_form.sub_county|as_crispy_field }}
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        {{ user_form.location|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        {{ user_form.sub_location|as_crispy_field }}
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        {{ user_form.village|as_crispy_field }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Additional Profile Information -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">Additional Information</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        {{ form.gender|as_crispy_field }}
+                                    </div>
+                                </div>
+                                
+                                <hr>
+                                
+                                <h6 class="mb-3">Guardian Information</h6>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        {{ form.guardian_name|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-4">
+                                        {{ form.guardian_phone|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-4">
+                                        {{ form.guardian_relationship|as_crispy_field }}
+                                    </div>
+                                </div>
+                                
+                                <hr>
+                                
+                                <h6 class="mb-3">Emergency Contact</h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        {{ form.emergency_contact_name|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        {{ form.emergency_contact_phone|as_crispy_field }}
+                                    </div>
+                                </div>
+                                
+                                <hr>
+                                
+                                <h6 class="mb-3">Special Needs</h6>
+                                {{ form.special_needs|as_crispy_field }}
+                                
+                                <hr>
+                                
+                                <h6 class="mb-3">Verification Documents</h6>
+                                <p class="text-muted small">Upload clear images of your ID card (front and back)</p>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            {{ form.id_card_front.label_tag }}
+                                            {% if form.instance.id_card_front %}
+                                                <div class="mb-2">
+                                                    <img src="{{ form.instance.id_card_front.url }}" 
+                                                         class="img-thumbnail" 
+                                                         style="max-height: 150px;">
+                                                    <small class="d-block text-muted">Current image</small>
+                                                </div>
+                                            {% endif %}
+                                            {{ form.id_card_front }}
+                                            {% if form.id_card_front.help_text %}
+                                                <small class="form-text text-muted">{{ form.id_card_front.help_text }}</small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            {{ form.id_card_back.label_tag }}
+                                            {% if form.instance.id_card_back %}
+                                                <div class="mb-2">
+                                                    <img src="{{ form.instance.id_card_back.url }}" 
+                                                         class="img-thumbnail" 
+                                                         style="max-height: 150px;">
+                                                    <small class="d-block text-muted">Current image</small>
+                                                </div>
+                                            {% endif %}
+                                            {{ form.id_card_back }}
+                                            {% if form.id_card_back.help_text %}
+                                                <small class="form-text text-muted">{{ form.id_card_back.help_text }}</small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Account Information (Read-only) -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">Account Information</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label class="text-muted small">Username</label>
+                                        <p class="form-control-plaintext">{{ user.username }}</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="text-muted small">Phone Number</label>
+                                        <p class="form-control-plaintext">
+                                            {{ user.phone_number }}
+                                            {% if user.is_verified %}
+                                                <i class="fas fa-check-circle text-success" title="Verified"></i>
+                                            {% else %}
+                                                <i class="fas fa-exclamation-circle text-warning" title="Not verified"></i>
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="text-muted small">ID Number</label>
+                                        <p class="form-control-plaintext">{{ user.id_number }}</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="text-muted small">Member Since</label>
+                                        <p class="form-control-plaintext">{{ user.date_joined|date:"d M Y" }}</p>
+                                    </div>
+                                </div>
+                                <div class="alert alert-info mt-3">
+                                    <small>
+                                        <i class="fas fa-info-circle"></i> 
+                                        Username, Phone Number, and ID Number cannot be changed. 
+                                        Contact support if you need to update these details.
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a href="{% url 'accounts:profile' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                            <div>
+                                <button type="submit" class="btn btn-primary" name="save_continue">
+                                    <i class="fas fa-save"></i> Save Changes
+                                </button>
+                                <button type="submit" class="btn btn-success" name="save_return">
+                                    <i class="fas fa-check"></i> Save & Return to Profile
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Image preview functionality
+    function previewImage(input, previewId) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById(previewId);
+                if (preview) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                }
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+    
+    // Add preview functionality to ID card uploads
+    const idCardFront = document.getElementById('id_id_card_front');
+    const idCardBack = document.getElementById('id_id_card_back');
+    
+    if (idCardFront) {
+        idCardFront.addEventListener('change', function() {
+            previewImage(this, 'id_card_front_preview');
+        });
+    }
+    
+    if (idCardBack) {
+        idCardBack.addEventListener('change', function() {
+            previewImage(this, 'id_card_back_preview');
+        });
+    }
+    
+    // Form validation
+    const form = document.querySelector('.needs-validation');
+    form.addEventListener('submit', function(event) {
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+    });
+    
+    // Phone number formatting for guardian and emergency contact
+    const phoneInputs = document.querySelectorAll('input[name*="phone"]');
+    phoneInputs.forEach(input => {
+        input.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.startsWith('254')) {
+                value = '+' + value;
+            } else if (value.startsWith('0')) {
+                value = '+254' + value.substring(1);
+            }
+            e.target.value = value;
+        });
+    });
+</script>
+{% endblock %}

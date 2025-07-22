@@ -1,0 +1,46 @@
+{% extends 'emails/base_email.html' %}
+
+{% block title %}Application Received - {{ block.super }}{% endblock %}
+
+{% block content %}
+<h2>Dear {{ user.first_name }},</h2>
+
+<p>Thank you for submitting your bursary application. We have successfully received your application with the following details:</p>
+
+<div class="info-box">
+    <h3>Application Details</h3>
+    <p>
+        <strong>Application Number:</strong> {{ application.application_number }}<br>
+        <strong>Academic Year:</strong> {{ application.academic_year.year }}<br>
+        <strong>Education Level:</strong> {{ application.get_education_level_display }}<br>
+        <strong>Institution:</strong> {{ application.institution.name|default:application.institution_name_other }}<br>
+        <strong>Amount Requested:</strong> KES {{ application.amount_requested|floatformat:2 }}<br>
+        <strong>Submission Date:</strong> {{ application.submitted_at|date:"d M Y, g:i A" }}
+    </p>
+</div>
+
+<h3>What Happens Next?</h3>
+<ol>
+    <li>Your application will be reviewed by our bursary committee</li>
+    <li>We may contact you if additional information is required</li>
+    <li>You will be notified via email and SMS once a decision is made</li>
+    <li>The review process typically takes 5-10 business days</li>
+</ol>
+
+<p>You can track the status of your application anytime by logging into your account:</p>
+
+<center>
+    <a href="{{ domain }}{% url 'bursary:application_status' application.pk %}" class="button">
+        Track Application Status
+    </a>
+</center>
+
+<p>Please ensure your phone number <strong>{{ user.phone_number }}</strong> is active as we may use it for important communications.</p>
+
+<p>If you have any questions or need to update your application, please contact us immediately.</p>
+
+<p>
+    Best regards,<br>
+    <strong>{{ constituency_name }} Bursary Committee</strong>
+</p>
+{% endblock %}
