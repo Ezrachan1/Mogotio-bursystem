@@ -4,227 +4,223 @@
 {% block title %}Reports & Analytics - {{ block.super }}{% endblock %}
 
 {% block extra_css %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2><i class="fas fa-chart-bar"></i> Reports & Analytics</h2>
+<div class="container-fluid mt-4 mb-5" style="max-width: 1400px;">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
         <div>
-            <button onclick="window.print()" class="btn btn-secondary">
-                <i class="fas fa-print"></i> Print Report
+            <h2 style="font-family: 'DM Serif Display', Georgia, serif; color: #0f2b46; margin-bottom: 0.2rem;">
+                <i class="fas fa-chart-bar" style="color: #c9a84c;"></i> Reports &amp; Analytics
+            </h2>
+            {% if active_year %}
+            <p style="color: #5a6a7e; font-size: 0.9rem; margin: 0;">Academic Year: <strong style="color: #0f2b46;">{{ active_year.year }}</strong></p>
+            {% endif %}
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <!-- Year Filter -->
+            <form method="get" class="d-flex gap-2">
+                <select name="year" class="form-select form-select-sm" style="width: auto;" onchange="this.form.submit()">
+                    <option value="">All Years</option>
+                    {% for yr in academic_years %}
+                    <option value="{{ yr.pk }}" {% if active_year and yr.pk == active_year.pk %}selected{% endif %}>{{ yr.year }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+            <button onclick="window.print()" class="btn btn-sm" style="border: 1.5px solid #0f2b46; color: #0f2b46;">
+                <i class="fas fa-print"></i> Print
             </button>
-            <a href="{% url 'bursary:export_applications' %}" class="btn btn-success">
-                <i class="fas fa-file-excel"></i> Export Data
+            <a href="{% url 'bursary:export_applications' %}" class="btn btn-sm" style="background: #1a8754; color: #fff; border: none;">
+                <i class="fas fa-file-excel"></i> Export
             </a>
         </div>
     </div>
-    
+
     {% if report_data %}
     <!-- Summary Cards -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h3 class="text-primary">{{ report_data.total_applications }}</h3>
-                    <p class="mb-0">Total Applications</p>
+    <div class="row g-3 mb-4">
+        <div class="col-md-3 col-6">
+            <div class="card" style="border: none; border-radius: 12px; overflow: hidden;">
+                <div class="card-body text-center" style="padding: 1.25rem;">
+                    <div style="font-family: 'DM Serif Display', Georgia, serif; font-size: 2rem; color: #0f2b46; line-height: 1;">{{ report_data.total_applications }}</div>
+                    <div style="font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #5a6a7e; margin-top: 0.3rem;">Total Applications</div>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h3 class="text-info">KES {{ report_data.total_requested|floatformat:0 }}</h3>
-                    <p class="mb-0">Total Requested</p>
+        <div class="col-md-3 col-6">
+            <div class="card" style="border: none; border-radius: 12px; overflow: hidden;">
+                <div class="card-body text-center" style="padding: 1.25rem;">
+                    <div style="font-family: 'DM Serif Display', Georgia, serif; font-size: 2rem; color: #2980b9; line-height: 1;">KES {{ report_data.total_requested|floatformat:0 }}</div>
+                    <div style="font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #5a6a7e; margin-top: 0.3rem;">Total Requested</div>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h3 class="text-success">KES {{ report_data.total_approved|floatformat:0 }}</h3>
-                    <p class="mb-0">Total Approved</p>
+        <div class="col-md-3 col-6">
+            <div class="card" style="border: none; border-radius: 12px; overflow: hidden;">
+                <div class="card-body text-center" style="padding: 1.25rem;">
+                    <div style="font-family: 'DM Serif Display', Georgia, serif; font-size: 2rem; color: #1a8754; line-height: 1;">KES {{ report_data.total_approved|floatformat:0 }}</div>
+                    <div style="font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #5a6a7e; margin-top: 0.3rem;">Total Approved</div>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h3 class="text-warning">KES {{ report_data.average_requested|floatformat:0 }}</h3>
-                    <p class="mb-0">Average Request</p>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="row">
-        <!-- Status Distribution -->
-        <div class="col-md-6 mb-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Applications by Status</h5>
-                </div>
-                <div class="card-body">
-                    <canvas id="statusChart" height="300"></canvas>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Education Level Distribution -->
-        <div class="col-md-6 mb-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Applications by Education Level</h5>
-                </div>
-                <div class="card-body">
-                    <canvas id="educationChart" height="300"></canvas>
+        <div class="col-md-3 col-6">
+            <div class="card" style="border: none; border-radius: 12px; overflow: hidden;">
+                <div class="card-body text-center" style="padding: 1.25rem;">
+                    <div style="font-family: 'DM Serif Display', Georgia, serif; font-size: 2rem; color: #c9a84c; line-height: 1;">KES {{ report_data.average_requested|floatformat:0 }}</div>
+                    <div style="font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #5a6a7e; margin-top: 0.3rem;">Average Request</div>
                 </div>
             </div>
         </div>
     </div>
-    
-    <!-- Ward Distribution Table -->
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Distribution by Ward</h5>
+
+    <!-- Charts Row -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <div class="card" style="border: none; border-radius: 12px;">
+                <div class="card-header" style="background: #f7f8fa; border-bottom: 1px solid #e2e6ec; border-radius: 12px 12px 0 0;">
+                    <h5 class="mb-0" style="font-family: 'DM Serif Display', Georgia, serif; color: #0f2b46; font-size: 1rem;">Applications by Status</h5>
                 </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Ward</th>
-                                    <th>Applications</th>
-                                    <th>Total Requested</th>
-                                    <th>Total Approved</th>
-                                    <th>Approval Rate</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for ward in ward_distribution %}
-                                <tr>
-                                    <td>{{ ward.applicant__ward|default:"Not Specified" }}</td>
-                                    <td>{{ ward.count }}</td>
-                                    <td>KES {{ ward.total_requested|floatformat:0 }}</td>
-                                    <td>KES {{ ward.total_approved|default:0|floatformat:0 }}</td>
-                                    <td>{{ ward.approval_rate|default:0 }}%</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+                <div class="card-body" style="height: 320px;">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card" style="border: none; border-radius: 12px;">
+                <div class="card-header" style="background: #f7f8fa; border-bottom: 1px solid #e2e6ec; border-radius: 12px 12px 0 0;">
+                    <h5 class="mb-0" style="font-family: 'DM Serif Display', Georgia, serif; color: #0f2b46; font-size: 1rem;">Applications by Education Level</h5>
+                </div>
+                <div class="card-body" style="height: 320px;">
+                    <canvas id="educationChart"></canvas>
                 </div>
             </div>
         </div>
     </div>
-    
-    <!-- Special Cases Summary -->
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Special Cases Summary</h5>
-                </div>
+
+    <!-- Special Cases -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card text-center" style="border: none; border-radius: 12px; border-left: 4px solid #c0392b;">
                 <div class="card-body">
-                    <div class="row text-center">
-                        <div class="col-md-4">
-                            <h4>{{ report_data.special_cases.orphans }}</h4>
-                            <p>Orphan Applicants</p>
-                        </div>
-                        <div class="col-md-4">
-                            <h4>{{ report_data.special_cases.single_parent }}</h4>
-                            <p>Single Parent Families</p>
-                        </div>
-                        <div class="col-md-4">
-                            <h4>{{ report_data.special_cases.disabled }}</h4>
-                            <p>Applicants with Disabilities</p>
-                        </div>
-                    </div>
+                    <div style="font-family: 'DM Serif Display', Georgia, serif; font-size: 2rem; color: #0f2b46;">{{ special_cases.orphans }}</div>
+                    <div style="font-size: 0.82rem; color: #5a6a7e;">Orphan Applicants</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center" style="border: none; border-radius: 12px; border-left: 4px solid #d4920b;">
+                <div class="card-body">
+                    <div style="font-family: 'DM Serif Display', Georgia, serif; font-size: 2rem; color: #0f2b46;">{{ special_cases.single_parent }}</div>
+                    <div style="font-size: 0.82rem; color: #5a6a7e;">Single Parent Families</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center" style="border: none; border-radius: 12px; border-left: 4px solid #6c3483;">
+                <div class="card-body">
+                    <div style="font-family: 'DM Serif Display', Georgia, serif; font-size: 2rem; color: #0f2b46;">{{ special_cases.disabled }}</div>
+                    <div style="font-size: 0.82rem; color: #5a6a7e;">Applicants with Disabilities</div>
                 </div>
             </div>
         </div>
     </div>
-    
+
     <!-- Monthly Trends -->
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Monthly Application Trends</h5>
+    <div class="row g-3 mb-4">
+        <div class="col-12">
+            <div class="card" style="border: none; border-radius: 12px;">
+                <div class="card-header" style="background: #f7f8fa; border-bottom: 1px solid #e2e6ec; border-radius: 12px 12px 0 0;">
+                    <h5 class="mb-0" style="font-family: 'DM Serif Display', Georgia, serif; color: #0f2b46; font-size: 1rem;">Monthly Application Trends</h5>
                 </div>
-                <div class="card-body">
-                    <canvas id="trendsChart" height="100"></canvas>
+                <div class="card-body" style="height: 280px;">
+                    <canvas id="trendsChart"></canvas>
                 </div>
             </div>
         </div>
     </div>
-    
-    <!-- Institution Distribution -->
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Top 10 Institutions</h5>
+
+    <!-- Ward Distribution + Institution Tables -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-7">
+            <div class="card" style="border: none; border-radius: 12px;">
+                <div class="card-header" style="background: #f7f8fa; border-bottom: 1px solid #e2e6ec; border-radius: 12px 12px 0 0;">
+                    <h5 class="mb-0" style="font-family: 'DM Serif Display', Georgia, serif; color: #0f2b46; font-size: 1rem;">Distribution by Ward</h5>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
                         <table class="table table-sm">
-                            <thead>
-                                <tr>
-                                    <th>Institution</th>
-                                    <th>Count</th>
-                                </tr>
-                            </thead>
+                            <thead><tr><th>Ward</th><th>Applications</th><th>Total Requested</th><th>Total Approved</th></tr></thead>
                             <tbody>
-                                {% for inst in institution_distribution %}
-                                <tr>
-                                    <td>{{ inst.institution__name|default:"Other" }}</td>
-                                    <td>{{ inst.count }}</td>
-                                </tr>
-                                {% endfor %}
+                            {% for ward in ward_distribution %}
+                            <tr>
+                                <td style="font-weight: 600; color: #0f2b46;">{{ ward.applicant__ward|default:"Not Specified" }}</td>
+                                <td>{{ ward.count }}</td>
+                                <td>KES {{ ward.total_requested|floatformat:0 }}</td>
+                                <td>KES {{ ward.total_approved|default:0|floatformat:0 }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4" class="text-center" style="color: #5a6a7e;">No data</td></tr>
+                            {% endfor %}
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
         </div>
-        
-        <!-- Education Level Statistics -->
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Approval Rates by Education Level</h5>
+        <div class="col-md-5">
+            <div class="card" style="border: none; border-radius: 12px;">
+                <div class="card-header" style="background: #f7f8fa; border-bottom: 1px solid #e2e6ec; border-radius: 12px 12px 0 0;">
+                    <h5 class="mb-0" style="font-family: 'DM Serif Display', Georgia, serif; color: #0f2b46; font-size: 1rem;">Top Institutions</h5>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
                         <table class="table table-sm">
-                            <thead>
-                                <tr>
-                                    <th>Level</th>
-                                    <th>Total</th>
-                                    <th>Approved</th>
-                                    <th>Rate</th>
-                                </tr>
-                            </thead>
+                            <thead><tr><th>Institution</th><th>Count</th></tr></thead>
                             <tbody>
-                                {% for stat in education_stats %}
-                                <tr>
-                                    <td>{{ stat.level }}</td>
-                                    <td>{{ stat.total }}</td>
-                                    <td>{{ stat.approved }}</td>
-                                    <td>
-                                        <div class="progress" style="height: 20px;">
-                                            <div class="progress-bar" role="progressbar" 
-                                                 data-width="{{ stat.approval_rate }}">
-                                                {{ stat.approval_rate|floatformat:0 }}%
-                                            </div>
+                            {% for inst in institution_distribution %}
+                            <tr>
+                                <td style="font-weight: 500;">{{ inst.institution__name|default:"Other" }}</td>
+                                <td><span class="badge" style="background: rgba(15,43,70,0.08); color: #0f2b46;">{{ inst.count }}</span></td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="2" class="text-center" style="color: #5a6a7e;">No data</td></tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Approval Rates by Education Level -->
+    {% if education_stats %}
+    <div class="row g-3 mb-4">
+        <div class="col-12">
+            <div class="card" style="border: none; border-radius: 12px;">
+                <div class="card-header" style="background: #f7f8fa; border-bottom: 1px solid #e2e6ec; border-radius: 12px 12px 0 0;">
+                    <h5 class="mb-0" style="font-family: 'DM Serif Display', Georgia, serif; color: #0f2b46; font-size: 1rem;">Approval Rates by Education Level</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead><tr><th>Level</th><th>Total</th><th>Approved</th><th style="width: 40%;">Rate</th></tr></thead>
+                            <tbody>
+                            {% for stat in education_stats %}
+                            <tr>
+                                <td style="font-weight: 600; color: #0f2b46;">{{ stat.level }}</td>
+                                <td>{{ stat.total }}</td>
+                                <td>{{ stat.approved }}</td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div style="flex: 1; height: 8px; background: #eef1f5; border-radius: 4px; overflow: hidden;">
+                                            <div style="height: 100%; width: {{ stat.approval_rate }}%; background: linear-gradient(90deg, #0f2b46, #1a8754); border-radius: 4px;"></div>
                                         </div>
-                                    </td>
-                                </tr>
-                                {% endfor %}
+                                        <span style="font-size: 0.82rem; font-weight: 600; color: #0f2b46; min-width: 42px;">{{ stat.approval_rate }}%</span>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
                             </tbody>
                         </table>
                     </div>
@@ -232,24 +228,101 @@
             </div>
         </div>
     </div>
+    {% endif %}
+
     {% else %}
-    <div class="alert alert-info">
-        <i class="fas fa-info-circle"></i> No data available for reporting. Please ensure there are applications in the system.
+    <div class="alert" style="background: rgba(41,128,185,0.08); border-left: 4px solid #2980b9; border-radius: 10px; padding: 1.25rem;">
+        <i class="fas fa-info-circle" style="color: #2980b9;"></i>
+        No application data available for reporting. Applications will appear here once students start submitting.
     </div>
     {% endif %}
 </div>
-
-<!-- Hidden data for JavaScript -->
-{% if report_data %}
-<script type="application/json" id="reportData">
-{{ report_data|safe }}
-</script>
-<script type="application/json" id="monthlyData">
-{{ monthly_applications|safe }}
-</script>
-{% endif %}
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'js/reports.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% if report_data %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const COLORS = {
+        navy: '#0f2b46', gold: '#c9a84c', emerald: '#1a8754', sky: '#2980b9',
+        amber: '#d4920b', ruby: '#c0392b', violet: '#6c3483', teal: '#20c997',
+        graphite: '#5a6a7e'
+    };
+
+    // Status Doughnut Chart
+    const statusCtx = document.getElementById('statusChart');
+    if (statusCtx) {
+        new Chart(statusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: {{ status_chart_labels|safe }},
+                datasets: [{
+                    data: {{ status_chart_data|safe }},
+                    backgroundColor: [COLORS.graphite, COLORS.sky, COLORS.amber, COLORS.violet, COLORS.emerald, COLORS.ruby, COLORS.teal],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom', labels: { padding: 16, usePointStyle: true, font: { size: 12 } } } },
+                cutout: '60%'
+            }
+        });
+    }
+
+    // Education Level Bar Chart
+    const eduCtx = document.getElementById('educationChart');
+    if (eduCtx) {
+        new Chart(eduCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ education_chart_labels|safe }},
+                datasets: [{
+                    label: 'Applications',
+                    data: {{ education_chart_data|safe }},
+                    backgroundColor: COLORS.navy,
+                    borderRadius: 6,
+                    barThickness: 40
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+            }
+        });
+    }
+
+    // Monthly Trends Line Chart
+    const trendsCtx = document.getElementById('trendsChart');
+    if (trendsCtx) {
+        const monthLabels = {{ monthly_labels|safe }};
+        const monthData = {{ monthly_data|safe }};
+        if (monthLabels.length > 0) {
+            new Chart(trendsCtx, {
+                type: 'line',
+                data: {
+                    labels: monthLabels,
+                    datasets: [{
+                        label: 'Applications',
+                        data: monthData,
+                        borderColor: COLORS.gold,
+                        backgroundColor: 'rgba(201,168,76,0.08)',
+                        fill: true, tension: 0.4, borderWidth: 3,
+                        pointBackgroundColor: COLORS.navy, pointBorderColor: '#fff',
+                        pointBorderWidth: 2, pointRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                }
+            });
+        }
+    }
+});
+</script>
+{% endif %}
 {% endblock %}

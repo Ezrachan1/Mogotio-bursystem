@@ -1,173 +1,254 @@
 {% extends 'base.html' %}
 
-{% block title %}Home - Constituency Bursary System{% endblock %}
+{% block title %}Home - {{ CONSTITUENCY_NAME|default:"Constituency" }} NG-CDF Bursary System{% endblock %}
 
 {% block content %}
 <!-- Hero Section -->
-<section class="bg-primary text-white py-5">
+<section style="background: linear-gradient(135deg, #091e33 0%, #0f2b46 40%, #1a3d5c 100%); position: relative; overflow: hidden; padding: 5rem 0;">
     <div class="container">
         <div class="row align-items-center">
-            <div class="col-lg-8">
-                <h1 class="display-4 fw-bold">{{ CONSTITUENCY_NAME|default:"Constituency" }} Bursary Fund</h1>
-                <p class="lead">Supporting bright minds in our community through educational funding</p>
+            <div class="col-lg-7">
+                <p class="mb-2" style="color: rgba(201,168,76,0.9); font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; font-size: 0.82rem;">
+                    <i class="fas fa-landmark me-1"></i> National Government Constituencies Development Fund
+                </p>
+                <h1 style="font-family: 'DM Serif Display', Georgia, serif; color: #ffffff; font-size: 3rem; line-height: 1.15; margin-bottom: 1rem;">
+                    {{ CONSTITUENCY_NAME|default:"Mogotio Constituency" }} Bursary Fund
+                </h1>
+                <p class="lead" style="color: rgba(255,255,255,0.78); font-size: 1.12rem; max-width: 560px;">
+                    Investing in education across Mogotio, Emining and Kisanana wards. Apply online for NG-CDF bursary funding to support your academic journey.
+                </p>
                 {% if not user.is_authenticated %}
-                    <div class="mt-4">
-                        <a href="{% url 'accounts:register' %}" class="btn btn-light btn-lg me-3">
+                    <div class="mt-4 d-flex flex-wrap gap-3">
+                        <a href="{% url 'accounts:register' %}" class="btn btn-lg" style="background: #c9a84c; border: none; color: #091e33; font-weight: 700; padding: 0.75rem 2rem; box-shadow: 0 4px 20px rgba(201,168,76,0.3); border-radius: 6px;">
                             <i class="fas fa-user-plus"></i> Apply Now
                         </a>
-                        <a href="{% url 'accounts:login' %}" class="btn btn-outline-light btn-lg">
+                        <a href="{% url 'accounts:login' %}" class="btn btn-lg" style="border: 2px solid rgba(255,255,255,0.35); color: #ffffff; padding: 0.7rem 2rem; background: transparent; border-radius: 6px;">
                             <i class="fas fa-sign-in-alt"></i> Login
                         </a>
                     </div>
                 {% else %}
                     <div class="mt-4">
-                        <a href="{% url 'bursary:dashboard' %}" class="btn btn-light btn-lg">
+                        <a href="{% url 'bursary:dashboard' %}" class="btn btn-lg" style="background: #c9a84c; border: none; color: #091e33; font-weight: 700; padding: 0.75rem 2rem; box-shadow: 0 4px 20px rgba(201,168,76,0.3); border-radius: 6px;">
                             <i class="fas fa-tachometer-alt"></i> Go to Dashboard
                         </a>
                     </div>
                 {% endif %}
             </div>
-            <div class="col-lg-4 text-center">
-                <i class="fas fa-graduation-cap" style="font-size: 150px; opacity: 0.8;"></i>
+            <div class="col-lg-5 text-center d-none d-lg-block">
+                <i class="fas fa-graduation-cap" style="font-size: 200px; color: #c9a84c; opacity: 0.2;"></i>
             </div>
         </div>
     </div>
 </section>
 
-<!-- Features Section -->
-<section class="py-5">
+<!-- MP Initiative Banner -->
+<section style="background: #ffffff; border-bottom: 1px solid #e2e6ec; padding: 1.5rem 0;">
     <div class="container">
-        <h2 class="text-center mb-5">How It Works</h2>
-        <div class="row">
-            <div class="col-md-4 mb-4">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body text-center">
-                        <div class="mb-3">
-                            <i class="fas fa-user-plus text-primary" style="font-size: 48px;"></i>
-                        </div>
-                        <h4>1. Register</h4>
-                        <p>Create your account with your personal details and verify your phone number</p>
+        <div class="d-flex flex-wrap align-items-center justify-content-center gap-3 text-center" style="color: #3a4a5c; font-size: 0.92rem;">
+            <i class="fas fa-quote-left" style="color: #c9a84c; font-size: 1.2rem;"></i>
+            <span>
+                This digital bursary platform was initiated and launched by the Member of Parliament for Mogotio Constituency,
+                <strong style="color: #0f2b46;">Hon. Reuben Kiborek</strong>, to ensure transparent, efficient and accessible bursary disbursement for every deserving student in the constituency.
+            </span>
+            <i class="fas fa-quote-right" style="color: #c9a84c; font-size: 1.2rem;"></i>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works -->
+<section style="padding: 4rem 0; background: #f7f8fa;">
+    <div class="container">
+        <h2 style="font-family: 'DM Serif Display', Georgia, serif; text-align: center; margin-bottom: 2.5rem; color: #0f2b46;">
+            How It Works
+            <span style="display: block; width: 60px; height: 3px; background: #c9a84c; border-radius: 2px; margin: 1rem auto 0;"></span>
+        </h2>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div style="border: none; border-radius: 16px; background: #ffffff; padding: 2rem 1.5rem; text-align: center; box-shadow: 0 1px 3px rgba(15,43,70,0.06); height: 100%;">
+                    <div style="font-family: 'DM Serif Display', Georgia, serif; font-size: 0.85rem; color: #c9a84c; margin-bottom: 0.4rem;">Step 01</div>
+                    <div style="width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, #0f2b46, #1a3d5c); color: #c9a84c; display: inline-flex; align-items: center; justify-content: center; font-size: 1.6rem; margin-bottom: 1.25rem; box-shadow: 0 4px 16px rgba(15,43,70,0.15);">
+                        <i class="fas fa-user-plus"></i>
                     </div>
+                    <h4 style="font-family: 'DM Serif Display', Georgia, serif; color: #0f2b46;">Register &amp; Verify</h4>
+                    <p style="color: #5a6a7e; font-size: 0.95rem;">Create your account with your National ID, phone number, and email. Verify your email to unlock the application form.</p>
                 </div>
             </div>
-            <div class="col-md-4 mb-4">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body text-center">
-                        <div class="mb-3">
-                            <i class="fas fa-file-alt text-primary" style="font-size: 48px;"></i>
-                        </div>
-                        <h4>2. Apply</h4>
-                        <p>Fill in the application form and upload required documents</p>
+            <div class="col-md-4">
+                <div style="border: none; border-radius: 16px; background: #ffffff; padding: 2rem 1.5rem; text-align: center; box-shadow: 0 1px 3px rgba(15,43,70,0.06); height: 100%;">
+                    <div style="font-family: 'DM Serif Display', Georgia, serif; font-size: 0.85rem; color: #c9a84c; margin-bottom: 0.4rem;">Step 02</div>
+                    <div style="width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, #0f2b46, #1a3d5c); color: #c9a84c; display: inline-flex; align-items: center; justify-content: center; font-size: 1.6rem; margin-bottom: 1.25rem; box-shadow: 0 4px 16px rgba(15,43,70,0.15);">
+                        <i class="fas fa-file-alt"></i>
                     </div>
+                    <h4 style="font-family: 'DM Serif Display', Georgia, serif; color: #0f2b46;">Fill &amp; Upload</h4>
+                    <p style="color: #5a6a7e; font-size: 0.95rem;">Complete the NG-CDF standard bursary form with your personal, institutional, family and financial details. Upload all required supporting documents.</p>
                 </div>
             </div>
-            <div class="col-md-4 mb-4">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body text-center">
-                        <div class="mb-3">
-                            <i class="fas fa-check-circle text-primary" style="font-size: 48px;"></i>
-                        </div>
-                        <h4>3. Get Funded</h4>
-                        <p>Track your application status and receive funding upon approval</p>
+            <div class="col-md-4">
+                <div style="border: none; border-radius: 16px; background: #ffffff; padding: 2rem 1.5rem; text-align: center; box-shadow: 0 1px 3px rgba(15,43,70,0.06); height: 100%;">
+                    <div style="font-family: 'DM Serif Display', Georgia, serif; font-size: 0.85rem; color: #c9a84c; margin-bottom: 0.4rem;">Step 03</div>
+                    <div style="width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, #0f2b46, #1a3d5c); color: #c9a84c; display: inline-flex; align-items: center; justify-content: center; font-size: 1.6rem; margin-bottom: 1.25rem; box-shadow: 0 4px 16px rgba(15,43,70,0.15);">
+                        <i class="fas fa-check-circle"></i>
                     </div>
+                    <h4 style="font-family: 'DM Serif Display', Georgia, serif; color: #0f2b46;">Submit &amp; Track</h4>
+                    <p style="color: #5a6a7e; font-size: 0.95rem;">Accept the declarations, submit your application, and track its status in real time — from review through to disbursement.</p>
                 </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- Eligibility Section -->
-<section class="py-5 bg-light">
+<!-- Eligibility & Documents -->
+<section style="background: #eef1f5; padding: 4rem 0;">
     <div class="container">
-        <div class="row">
+        <div class="row g-5">
             <div class="col-lg-6">
-                <h2>Who Can Apply?</h2>
-                <p class="lead">The bursary fund is available to:</p>
+                <h2 style="font-family: 'DM Serif Display', Georgia, serif; color: #0f2b46; margin-bottom: 0.75rem;">Who Can Apply?</h2>
+                <p style="font-size: 0.95rem; color: #5a6a7e;">The NG-CDF bursary fund is available to:</p>
                 <ul class="list-unstyled">
-                    <li class="mb-2">
-                        <i class="fas fa-check text-success"></i> 
-                        Students residing in {{ CONSTITUENCY_NAME|default:"our constituency" }}
+                    <li style="padding: 0.5rem 0; font-size: 0.95rem; display: flex; align-items: flex-start; gap: 0.6rem;">
+                        <i class="fas fa-check-circle" style="color: #1a8754; margin-top: 3px;"></i>
+                        Students residing in Mogotio Constituency (Mogotio, Emining, Kisanana wards)
                     </li>
-                    <li class="mb-2">
-                        <i class="fas fa-check text-success"></i> 
-                        Students enrolled in recognized educational institutions
+                    <li style="padding: 0.5rem 0; font-size: 0.95rem; display: flex; align-items: flex-start; gap: 0.6rem;">
+                        <i class="fas fa-check-circle" style="color: #1a8754; margin-top: 3px;"></i>
+                        Students enrolled in recognized primary schools, secondary schools, TVETs, colleges and universities
                     </li>
-                    <li class="mb-2">
-                        <i class="fas fa-check text-success"></i> 
+                    <li style="padding: 0.5rem 0; font-size: 0.95rem; display: flex; align-items: flex-start; gap: 0.6rem;">
+                        <i class="fas fa-check-circle" style="color: #1a8754; margin-top: 3px;"></i>
                         Students from financially disadvantaged backgrounds
                     </li>
-                    <li class="mb-2">
-                        <i class="fas fa-check text-success"></i> 
-                        Students in primary, secondary, TVET, or university education
+                    <li style="padding: 0.5rem 0; font-size: 0.95rem; display: flex; align-items: flex-start; gap: 0.6rem;">
+                        <i class="fas fa-check-circle" style="color: #1a8754; margin-top: 3px;"></i>
+                        Orphans, students with disabilities, and those from single-parent families are given priority consideration
                     </li>
                 </ul>
             </div>
             <div class="col-lg-6">
-                <h2>Required Documents</h2>
-                <p class="lead">You will need to upload:</p>
-                <ul class="list-unstyled">
-                    <li class="mb-2">
-                        <i class="fas fa-file text-primary"></i> 
-                        Admission letter or student ID
-                    </li>
-                    <li class="mb-2">
-                        <i class="fas fa-file text-primary"></i> 
-                        Fee structure from your institution
-                    </li>
-                    <li class="mb-2">
-                        <i class="fas fa-file text-primary"></i> 
-                        Copy of your national ID or birth certificate
-                    </li>
-                    <li class="mb-2">
-                        <i class="fas fa-file text-primary"></i> 
-                        Parent/Guardian ID copy
-                    </li>
-                    <li class="mb-2">
-                        <i class="fas fa-file text-primary"></i> 
-                        Any other supporting documents
-                    </li>
-                </ul>
+                <h2 style="font-family: 'DM Serif Display', Georgia, serif; color: #0f2b46; margin-bottom: 0.75rem;">Required Documents</h2>
+                <p style="font-size: 0.95rem; color: #5a6a7e;">Applicants MUST upload the following:</p>
+                <ol style="padding-left: 1.2rem;">
+                    <li style="padding: 0.35rem 0; font-size: 0.92rem; color: #3a4a5c;">Student's Transcript / Report Form</li>
+                    <li style="padding: 0.35rem 0; font-size: 0.92rem; color: #3a4a5c;">Parent's / Guardian's National ID Copy</li>
+                    <li style="padding: 0.35rem 0; font-size: 0.92rem; color: #3a4a5c;">Student's National ID Copy <small style="color: #5a6a7e;">(mandatory for post-school)</small></li>
+                    <li style="padding: 0.35rem 0; font-size: 0.92rem; color: #3a4a5c;">Birth Certificate Copy</li>
+                    <li style="padding: 0.35rem 0; font-size: 0.92rem; color: #3a4a5c;">Secondary / College / University ID Card</li>
+                    <li style="padding: 0.35rem 0; font-size: 0.92rem; color: #3a4a5c;">Death Certificate / Burial Permit <small style="color: #5a6a7e;">(mandatory for orphans)</small></li>
+                    <li style="padding: 0.35rem 0; font-size: 0.92rem; color: #3a4a5c;">Current Fees Structure <small style="color: #5a6a7e;">(mandatory for all)</small></li>
+                    <li style="padding: 0.35rem 0; font-size: 0.92rem; color: #3a4a5c;">Admission Letter <small style="color: #5a6a7e;">(mandatory for colleges &amp; universities)</small></li>
+                </ol>
             </div>
         </div>
     </div>
 </section>
 
 <!-- Statistics Section -->
-<section class="py-5">
+<section style="background: #ffffff; padding: 4rem 0;">
     <div class="container">
-        <h2 class="text-center mb-5">Our Impact</h2>
-        <div class="row text-center">
-            <div class="col-md-3 mb-4">
-                <div class="display-4 text-primary fw-bold">500+</div>
-                <p class="lead">Students Supported</p>
+        <h2 style="font-family: 'DM Serif Display', Georgia, serif; text-align: center; margin-bottom: 2.5rem; color: #0f2b46;">
+            Our Impact
+            <span style="display: block; width: 60px; height: 3px; background: #c9a84c; border-radius: 2px; margin: 1rem auto 0;"></span>
+        </h2>
+        <div class="row">
+            <div class="col-md-3 col-6">
+                <div style="padding: 1.5rem; text-align: center;">
+                    <div style="font-family: 'DM Serif Display', Georgia, serif; font-size: 2.8rem; color: #0f2b46; line-height: 1; margin-bottom: 0.5rem;">3</div>
+                    <div style="font-weight: 600; font-size: 0.9rem; color: #5a6a7e; text-transform: uppercase; letter-spacing: 0.06em;">Wards Covered</div>
+                </div>
             </div>
-            <div class="col-md-3 mb-4">
-                <div class="display-4 text-primary fw-bold">KES 10M+</div>
-                <p class="lead">Funds Disbursed</p>
+            <div class="col-md-3 col-6">
+                <div style="padding: 1.5rem; text-align: center;">
+                    <div style="font-family: 'DM Serif Display', Georgia, serif; font-size: 2.8rem; color: #0f2b46; line-height: 1; margin-bottom: 0.5rem;">500+</div>
+                    <div style="font-weight: 600; font-size: 0.9rem; color: #5a6a7e; text-transform: uppercase; letter-spacing: 0.06em;">Students Supported</div>
+                </div>
             </div>
-            <div class="col-md-3 mb-4">
-                <div class="display-4 text-primary fw-bold">50+</div>
-                <p class="lead">Partner Institutions</p>
+            <div class="col-md-3 col-6">
+                <div style="padding: 1.5rem; text-align: center;">
+                    <div style="font-family: 'DM Serif Display', Georgia, serif; font-size: 2.8rem; color: #0f2b46; line-height: 1; margin-bottom: 0.5rem;">KES 10M+</div>
+                    <div style="font-weight: 600; font-size: 0.9rem; color: #5a6a7e; text-transform: uppercase; letter-spacing: 0.06em;">Funds Disbursed</div>
+                </div>
             </div>
-            <div class="col-md-3 mb-4">
-                <div class="display-4 text-primary fw-bold">95%</div>
-                <p class="lead">Success Rate</p>
+            <div class="col-md-3 col-6">
+                <div style="padding: 1.5rem; text-align: center;">
+                    <div style="font-family: 'DM Serif Display', Georgia, serif; font-size: 2.8rem; color: #0f2b46; line-height: 1; margin-bottom: 0.5rem;">100%</div>
+                    <div style="font-weight: 600; font-size: 0.9rem; color: #5a6a7e; text-transform: uppercase; letter-spacing: 0.06em;">Digital &amp; Transparent</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- About the Initiative -->
+<section style="background: #f7f8fa; padding: 4rem 0; border-top: 1px solid #e2e6ec;">
+    <div class="container">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-7">
+                <h2 style="font-family: 'DM Serif Display', Georgia, serif; color: #0f2b46; margin-bottom: 1rem;">
+                    About This Initiative
+                    <span style="display: block; width: 50px; height: 3px; background: #c9a84c; border-radius: 2px; margin-top: 0.75rem;"></span>
+                </h2>
+                <p style="color: #3a4a5c; font-size: 0.95rem; line-height: 1.7;">
+                    The Mogotio Constituency Bursary System is a digital platform initiated and launched by <strong style="color: #0f2b46;">Hon. Reuben Kiborek</strong>, the Member of Parliament for Mogotio Constituency, Baringo County. The platform replaces the traditional paper-based bursary application process with a modern, transparent, and efficient online system.
+                </p>
+                <p style="color: #3a4a5c; font-size: 0.95rem; line-height: 1.7;">
+                    Through this system, students and their families can apply for NG-CDF bursary funds from the comfort of their homes, upload required documents digitally, and track the progress of their applications in real time. The system ensures fairness, accountability, and faster processing of bursary applications across all three wards — Mogotio, Emining, and Kisanana.
+                </p>
+                <div class="d-flex flex-wrap gap-3 mt-3">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.88rem; color: #0f2b46; font-weight: 600;">
+                        <i class="fas fa-shield-alt" style="color: #c9a84c;"></i> Secure &amp; Private
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.88rem; color: #0f2b46; font-weight: 600;">
+                        <i class="fas fa-clock" style="color: #c9a84c;"></i> Real-time Tracking
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.88rem; color: #0f2b46; font-weight: 600;">
+                        <i class="fas fa-balance-scale" style="color: #c9a84c;"></i> Fair &amp; Transparent
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.88rem; color: #0f2b46; font-weight: 600;">
+                        <i class="fas fa-mobile-alt" style="color: #c9a84c;"></i> Mobile Friendly
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-5">
+                <div style="background: linear-gradient(135deg, #0f2b46, #1a3d5c); border-radius: 16px; padding: 2rem; color: #fff; box-shadow: 0 8px 30px rgba(15,43,70,0.2);">
+                    <div style="text-align: center; margin-bottom: 1.25rem;">
+                        <div style="width: 64px; height: 64px; border-radius: 50%; background: rgba(201,168,76,0.15); color: #c9a84c; display: inline-flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                            <i class="fas fa-landmark"></i>
+                        </div>
+                    </div>
+                    <h5 style="font-family: 'DM Serif Display', Georgia, serif; text-align: center; color: #ffffff; margin-bottom: 1rem;">Mogotio Constituency</h5>
+                    <div style="font-size: 0.88rem; color: rgba(255,255,255,0.75);">
+                        <div style="display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <span>County</span><strong style="color: #fff;">Baringo</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <span>Constituency Code</span><strong style="color: #fff;">{{ CONSTITUENCY_CODE|default:"020" }}</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <span>Wards</span><strong style="color: #fff;">Mogotio, Emining, Kisanana</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <span>Member of Parliament</span><strong style="color: #c9a84c;">Hon. Reuben Kiborek</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 0.4rem 0;">
+                            <span>Contact</span><strong style="color: #fff;">{{ CONSTITUENCY_PHONE|default:"+254700000000" }}</strong>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </section>
 
 <!-- CTA Section -->
-<section class="py-5 bg-primary text-white">
+<section style="background: linear-gradient(135deg, #091e33 0%, #0f2b46 100%); position: relative; overflow: hidden; padding: 4rem 0; border-top: 3px solid #c9a84c;">
     <div class="container text-center">
-        <h2 class="mb-4">Ready to Apply for Bursary?</h2>
-        <p class="lead mb-4">Start your application today and secure funding for your education</p>
+        <h2 class="mb-3" style="font-family: 'DM Serif Display', Georgia, serif; color: #ffffff;">Ready to Apply for Bursary?</h2>
+        <p class="lead mb-4" style="font-size: 1.05rem; color: rgba(255,255,255,0.72);">Start your application today and secure NG-CDF funding for your education</p>
         {% if not user.is_authenticated %}
-            <a href="{% url 'accounts:register' %}" class="btn btn-light btn-lg">
+            <a href="{% url 'accounts:register' %}" class="btn btn-lg" style="background: #c9a84c; border: none; color: #091e33; font-weight: 700; padding: 0.75rem 2rem; border-radius: 6px; box-shadow: 0 4px 20px rgba(201,168,76,0.3);">
                 <i class="fas fa-rocket"></i> Get Started
             </a>
         {% else %}
-            <a href="{% url 'bursary:application_create' %}" class="btn btn-light btn-lg">
+            <a href="{% url 'bursary:application_create' %}" class="btn btn-lg" style="background: #c9a84c; border: none; color: #091e33; font-weight: 700; padding: 0.75rem 2rem; border-radius: 6px; box-shadow: 0 4px 20px rgba(201,168,76,0.3);">
                 <i class="fas fa-plus"></i> New Application
             </a>
         {% endif %}

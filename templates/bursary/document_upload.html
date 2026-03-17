@@ -48,47 +48,75 @@
                     
                     <!-- Required Documents Checklist -->
                     <div class="card mb-4">
-                        <div class="card-header">
-                            <h5 class="mb-0">Required Documents</h5>
+                        <div class="card-header" style="background: #f7f8fa; border-bottom: 1px solid #e2e6ec;">
+                            <h5 class="mb-0" style="font-family: 'DM Serif Display', Georgia, serif; color: #0f2b46;">
+                                <i class="fas fa-clipboard-check" style="color: #c9a84c;"></i> Key Attachments Checklist
+                            </h5>
                         </div>
                         <div class="card-body">
-                            <div class="row">
+                            <!-- Mandatory for ALL -->
+                            <h6 style="font-weight: 700; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.05em; color: #0f2b46; margin-bottom: 0.75rem;">
+                                <i class="fas fa-asterisk" style="color: #c0392b; font-size: 0.6rem; vertical-align: super;"></i> Mandatory for All Applicants
+                            </h6>
+                            <div class="row mb-3">
                                 {% for doc_type, doc_name in required_docs %}
                                 <div class="col-md-6 mb-2">
-                                    <div class="form-check">
-                                        {% if doc_type in documents.values_list.document_type.distinct %}
-                                            <input class="form-check-input" type="checkbox" checked disabled>
-                                            <label class="form-check-label text-success">
-                                                <i class="fas fa-check-circle"></i> {{ doc_name }}
-                                            </label>
+                                    <div class="d-flex align-items-center gap-2" style="padding: 0.4rem 0;">
+                                        {% if doc_type in uploaded_types %}
+                                            <i class="fas fa-check-circle" style="color: #1a8754; font-size: 1.1rem;"></i>
+                                            <span style="color: #1a8754; font-weight: 600; font-size: 0.9rem;">{{ doc_name }}</span>
+                                            <span class="badge" style="background: rgba(26,135,84,0.1); color: #1a8754; font-size: 0.68rem;">Uploaded</span>
                                         {% else %}
-                                            <input class="form-check-input" type="checkbox" disabled>
-                                            <label class="form-check-label text-danger">
-                                                <i class="fas fa-times-circle"></i> {{ doc_name }}
-                                            </label>
+                                            <i class="fas fa-times-circle" style="color: #c0392b; font-size: 1.1rem;"></i>
+                                            <span style="color: #c0392b; font-size: 0.9rem;">{{ doc_name }}</span>
+                                            <span class="badge" style="background: rgba(192,57,43,0.1); color: #c0392b; font-size: 0.68rem;">Required</span>
                                         {% endif %}
                                     </div>
                                 </div>
                                 {% endfor %}
                             </div>
                             
+                            {% if conditional_docs %}
+                            <hr style="border-color: #eef1f5;">
+                            <h6 style="font-weight: 700; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.05em; color: #0f2b46; margin-bottom: 0.75rem;">
+                                <i class="fas fa-asterisk" style="color: #d4920b; font-size: 0.6rem; vertical-align: super;"></i> Required for Your Education Level
+                            </h6>
+                            <div class="row mb-3">
+                                {% for doc_type, doc_name in conditional_docs %}
+                                <div class="col-md-6 mb-2">
+                                    <div class="d-flex align-items-center gap-2" style="padding: 0.4rem 0;">
+                                        {% if doc_type in uploaded_types %}
+                                            <i class="fas fa-check-circle" style="color: #1a8754; font-size: 1.1rem;"></i>
+                                            <span style="color: #1a8754; font-weight: 600; font-size: 0.9rem;">{{ doc_name }}</span>
+                                            <span class="badge" style="background: rgba(26,135,84,0.1); color: #1a8754; font-size: 0.68rem;">Uploaded</span>
+                                        {% else %}
+                                            <i class="fas fa-exclamation-circle" style="color: #d4920b; font-size: 1.1rem;"></i>
+                                            <span style="color: #d4920b; font-size: 0.9rem;">{{ doc_name }}</span>
+                                            <span class="badge" style="background: rgba(212,146,11,0.1); color: #d4920b; font-size: 0.68rem;">Required</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            
                             {% if optional_docs %}
-                            <hr>
-                            <h6>Additional Documents (Based on your circumstances)</h6>
+                            <hr style="border-color: #eef1f5;">
+                            <h6 style="font-weight: 700; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.05em; color: #5a6a7e; margin-bottom: 0.75rem;">
+                                Supporting / Circumstantial Documents
+                            </h6>
                             <div class="row">
                                 {% for doc_type, doc_name in optional_docs %}
                                 <div class="col-md-6 mb-2">
-                                    <div class="form-check">
-                                        {% if doc_type in documents.values_list.document_type.distinct %}
-                                            <input class="form-check-input" type="checkbox" checked disabled>
-                                            <label class="form-check-label text-success">
-                                                <i class="fas fa-check-circle"></i> {{ doc_name }}
-                                            </label>
+                                    <div class="d-flex align-items-center gap-2" style="padding: 0.4rem 0;">
+                                        {% if doc_type in uploaded_types %}
+                                            <i class="fas fa-check-circle" style="color: #1a8754; font-size: 1.1rem;"></i>
+                                            <span style="color: #1a8754; font-weight: 600; font-size: 0.9rem;">{{ doc_name }}</span>
+                                            <span class="badge" style="background: rgba(26,135,84,0.1); color: #1a8754; font-size: 0.68rem;">Uploaded</span>
                                         {% else %}
-                                            <input class="form-check-input" type="checkbox" disabled>
-                                            <label class="form-check-label text-muted">
-                                                <i class="fas fa-circle"></i> {{ doc_name }}
-                                            </label>
+                                            <i class="fas fa-circle" style="color: #d1d8e0; font-size: 0.7rem;"></i>
+                                            <span style="color: #5a6a7e; font-size: 0.9rem;">{{ doc_name }}</span>
+                                            <span class="badge" style="background: rgba(90,106,126,0.08); color: #5a6a7e; font-size: 0.68rem;">Optional</span>
                                         {% endif %}
                                     </div>
                                 </div>
@@ -170,23 +198,117 @@
                     {% endif %}
                     
                     <!-- Action Buttons -->
-                    <div class="mt-4 d-flex justify-content-between">
-                        <a href="{% url 'bursary:application_update' application.pk %}" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left"></i> Back to Application
-                        </a>
-                        
-                        {% if application.status == 'draft' %}
-                            <form method="post" action="{% url 'bursary:application_submit' application.pk %}" 
-                                  style="display: inline;">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-success btn-lg" id="submitBtn">
-                                    <i class="fas fa-paper-plane"></i> Submit Application
-                                </button>
-                            </form>
-                        {% else %}
+                    <div class="mt-4">
+                        <div class="d-flex justify-content-between mb-4">
+                            <a href="{% url 'bursary:application_update' application.pk %}" class="btn" style="background: #5a6a7e; color: #fff; border: none;">
+                                <i class="fas fa-arrow-left"></i> Back to Application
+                            </a>
+                            {% if application.status != 'draft' %}
                             <a href="{% url 'bursary:application_detail' application.pk %}" class="btn btn-primary">
                                 <i class="fas fa-check"></i> Done
                             </a>
+                            {% endif %}
+                        </div>
+
+                        {% if application.status == 'draft' %}
+                        <!-- Declarations & Submit Section -->
+                        <div class="card" style="border: 2px solid #c9a84c; border-radius: 12px; overflow: hidden;">
+                            <div class="card-header" style="background: linear-gradient(135deg, #0f2b46, #1a3d5c); border: none; padding: 1rem 1.25rem;">
+                                <h5 class="mb-0" style="font-family: 'DM Serif Display', Georgia, serif; color: #fff; font-size: 1.05rem;">
+                                    <i class="fas fa-file-signature" style="color: #c9a84c;"></i> Declarations &amp; Submission
+                                </h5>
+                            </div>
+                            <div class="card-body" style="padding: 1.5rem;">
+                                <form method="post" action="{% url 'bursary:application_submit' application.pk %}" enctype="multipart/form-data" id="submitForm">
+                                    {% csrf_token %}
+
+                                    <!-- Student Declaration -->
+                                    <div style="background: #f7f8fa; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem;">
+                                        <h6 style="font-family: 'DM Serif Display', Georgia, serif; color: #0f2b46; margin-bottom: 0.5rem; font-size: 0.95rem;">
+                                            Student's Declaration
+                                        </h6>
+                                        <p style="font-size: 0.85rem; color: #3a4a5c; margin-bottom: 0.75rem;">
+                                            I declare that I have read this form and I hereby confirm that the information given herein is true to the best of my knowledge and belief. I understand that any false information provided shall lead to my automatic disqualification by the committee.
+                                        </p>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="studentDeclaration" name="student_declaration" value="1" required style="border-color: #0f2b46;">
+                                            <label class="form-check-label" for="studentDeclaration" style="font-weight: 600; color: #0f2b46; font-size: 0.9rem;">
+                                                I, {{ application.applicant.get_full_name }}, accept this declaration
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <!-- Parent/Guardian Declaration -->
+                                    <div style="background: #f7f8fa; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1.25rem;">
+                                        <h6 style="font-family: 'DM Serif Display', Georgia, serif; color: #0f2b46; margin-bottom: 0.5rem; font-size: 0.95rem;">
+                                            Parent's / Guardian's Declaration
+                                        </h6>
+                                        <p style="font-size: 0.85rem; color: #3a4a5c; margin-bottom: 0.75rem;">
+                                            I declare that I have read this form and I hereby confirm that the information given herein is true to the best of my knowledge and belief. I understand that any false information provided shall lead to disqualification of the student by the committee.
+                                        </p>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="guardianDeclaration" name="guardian_declaration" value="1" required style="border-color: #0f2b46;">
+                                            <label class="form-check-label" for="guardianDeclaration" style="font-weight: 600; color: #0f2b46; font-size: 0.9rem;">
+                                                I confirm this declaration on behalf of my parent/guardian
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <!-- Optional Signature Uploads -->
+                                    <div style="background: rgba(201,168,76,0.06); border: 1px dashed #c9a84c; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1.25rem;">
+                                        <h6 style="font-family: 'DM Serif Display', Georgia, serif; color: #0f2b46; margin-bottom: 0.3rem; font-size: 0.95rem;">
+                                            <i class="fas fa-signature" style="color: #c9a84c;"></i> Signature Uploads <span style="font-size: 0.75rem; color: #5a6a7e; font-family: 'Source Sans 3', sans-serif; font-weight: 400;">(Optional — for printed form)</span>
+                                        </h6>
+                                        <p style="font-size: 0.82rem; color: #5a6a7e; margin-bottom: 0.5rem;">
+                                            Upload clear images of signatures. These will appear on the printed application form. If not uploaded, blank signature lines will be printed instead.
+                                        </p>
+                                        <div style="background: #fff; border: 1px solid #e2e6ec; border-radius: 6px; padding: 0.6rem 0.85rem; margin-bottom: 0.85rem;">
+                                            <p style="font-size: 0.78rem; color: #3a4a5c; margin-bottom: 0;">
+                                                <i class="fas fa-ruler-combined" style="color: #c9a84c; margin-right: 0.3rem;"></i>
+                                                <strong>Requirements:</strong> PNG or JPG &bull; 200–800px wide &bull; 50–300px tall &bull; Max 500KB
+                                            </p>
+                                            <p style="font-size: 0.75rem; color: #5a6a7e; margin-bottom: 0; margin-top: 0.2rem;">
+                                                Tip: Sign on white paper, photograph it, crop tightly, and save as PNG. Transparent background recommended.
+                                            </p>
+                                        </div>
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <label style="font-weight: 600; font-size: 0.82rem; color: #3a4a5c; display: block; margin-bottom: 0.3rem;">Student's Signature</label>
+                                                {% if application.student_signature %}
+                                                    <div class="mb-2">
+                                                        <img src="{{ application.student_signature.url }}" style="max-height: 50px; border: 1px solid #e2e6ec; border-radius: 4px; padding: 4px; background: #fff;">
+                                                        <small style="color: #1a8754; display: block; margin-top: 0.2rem;"><i class="fas fa-check-circle"></i> Uploaded</small>
+                                                    </div>
+                                                {% endif %}
+                                                <input type="file" name="student_signature" id="sigStudent" class="form-control form-control-sm" accept="image/png,image/jpeg">
+                                                <div id="sigStudentPreview" style="margin-top: 0.4rem; display: none;">
+                                                    <img id="sigStudentImg" style="max-height: 60px; border: 1px solid #e2e6ec; border-radius: 4px; padding: 3px; background: #fff;">
+                                                    <div id="sigStudentInfo" style="font-size: 0.75rem; margin-top: 0.2rem;"></div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label style="font-weight: 600; font-size: 0.82rem; color: #3a4a5c; display: block; margin-bottom: 0.3rem;">Parent/Guardian's Signature</label>
+                                                {% if application.guardian_signature %}
+                                                    <div class="mb-2">
+                                                        <img src="{{ application.guardian_signature.url }}" style="max-height: 50px; border: 1px solid #e2e6ec; border-radius: 4px; padding: 4px; background: #fff;">
+                                                        <small style="color: #1a8754; display: block; margin-top: 0.2rem;"><i class="fas fa-check-circle"></i> Uploaded</small>
+                                                    </div>
+                                                {% endif %}
+                                                <input type="file" name="guardian_signature" id="sigGuardian" class="form-control form-control-sm" accept="image/png,image/jpeg">
+                                                <div id="sigGuardianPreview" style="margin-top: 0.4rem; display: none;">
+                                                    <img id="sigGuardianImg" style="max-height: 60px; border: 1px solid #e2e6ec; border-radius: 4px; padding: 3px; background: #fff;">
+                                                    <div id="sigGuardianInfo" style="font-size: 0.75rem; margin-top: 0.2rem;"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-lg w-100" id="submitBtn" style="background: linear-gradient(135deg, #1a8754, #1e9e60); border: none; color: #fff; font-weight: 600; border-radius: 8px; padding: 0.8rem; box-shadow: 0 4px 12px rgba(26,135,84,0.25);">
+                                        <i class="fas fa-paper-plane"></i> Submit Application
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
                         {% endif %}
                     </div>
                 </div>
@@ -278,19 +400,96 @@
         });
     });
     
-    // Check required documents before submission
-    const submitBtn = document.getElementById('submitBtn');
-    if (submitBtn) {
-        submitBtn.addEventListener('click', function(e) {
-            const requiredDocs = parseInt('{{ required_docs|length }}') || 3;
-            const uploadedRequired = document.querySelectorAll('.form-check-input:checked:disabled').length;
-            
-            if (uploadedRequired < requiredDocs) {
+    // ========== Signature Preview & Client-Side Validation ==========
+    function setupSigPreview(inputId, previewId, imgId, infoId) {
+        const input = document.getElementById(inputId);
+        const preview = document.getElementById(previewId);
+        const img = document.getElementById(imgId);
+        const info = document.getElementById(infoId);
+        if (!input) return;
+
+        input.addEventListener('change', function() {
+            const file = this.files[0];
+            if (!file) { preview.style.display = 'none'; return; }
+
+            const sizeKB = Math.round(file.size / 1024);
+            const validType = ['image/png', 'image/jpeg', 'image/jpg'].includes(file.type);
+            const validSize = file.size <= 500 * 1024;
+
+            // Read image to check dimensions
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const tempImg = new Image();
+                tempImg.onload = function() {
+                    const w = tempImg.width, h = tempImg.height;
+                    const validW = w >= 200 && w <= 800;
+                    const validH = h >= 50 && h <= 300;
+                    const allValid = validType && validSize && validW && validH;
+
+                    preview.style.display = 'block';
+                    img.src = e.target.result;
+
+                    let msgs = [];
+                    msgs.push('<span style="color:' + (validW && validH ? '#1a8754' : '#c0392b') + ';">' + w + '×' + h + 'px</span>');
+                    msgs.push('<span style="color:' + (validSize ? '#1a8754' : '#c0392b') + ';">' + sizeKB + 'KB</span>');
+                    msgs.push('<span style="color:' + (validType ? '#1a8754' : '#c0392b') + ';">' + file.type.split('/')[1].toUpperCase() + '</span>');
+
+                    if (allValid) {
+                        info.innerHTML = '<i class="fas fa-check-circle" style="color:#1a8754;"></i> ' + msgs.join(' &bull; ');
+                    } else {
+                        let errors = [];
+                        if (!validType) errors.push('Must be PNG or JPG');
+                        if (!validSize) errors.push('Max 500KB');
+                        if (!validW) errors.push('Width: 200–800px');
+                        if (!validH) errors.push('Height: 50–300px');
+                        info.innerHTML = '<i class="fas fa-exclamation-circle" style="color:#c0392b;"></i> ' + msgs.join(' &bull; ') +
+                            '<br><span style="color:#c0392b;">' + errors.join(' &bull; ') + '</span>';
+                    }
+                };
+                tempImg.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    setupSigPreview('sigStudent', 'sigStudentPreview', 'sigStudentImg', 'sigStudentInfo');
+    setupSigPreview('sigGuardian', 'sigGuardianPreview', 'sigGuardianImg', 'sigGuardianInfo');
+
+    // ========== Submit Form Validation ==========
+    const submitForm = document.getElementById('submitForm');
+    if (submitForm) {
+        submitForm.addEventListener('submit', function(e) {
+            const studentDecl = document.getElementById('studentDeclaration');
+            const guardianDecl = document.getElementById('guardianDeclaration');
+
+            if (!studentDecl.checked || !guardianDecl.checked) {
                 e.preventDefault();
-                if (confirm('You have not uploaded all required documents. Do you want to continue?')) {
-                    // Allow submission
-                    this.closest('form').submit();
-                }
+                alert('You must accept both declarations before submitting.');
+                return false;
+            }
+
+            // Client-side signature dimension check
+            function checkSigInput(inputId, label) {
+                const input = document.getElementById(inputId);
+                if (!input || !input.files || !input.files[0]) return null; // No file = ok (optional)
+                const file = input.files[0];
+                if (file.size > 500 * 1024) return label + ': exceeds 500KB.';
+                if (!['image/png', 'image/jpeg', 'image/jpg'].includes(file.type)) return label + ': must be PNG or JPG.';
+                return null; // Dimension check done server-side (can't read sync here)
+            }
+
+            const sigErr1 = checkSigInput('sigStudent', "Student's signature");
+            const sigErr2 = checkSigInput('sigGuardian', "Guardian's signature");
+            const sigErrs = [sigErr1, sigErr2].filter(Boolean);
+            if (sigErrs.length) {
+                e.preventDefault();
+                alert('Signature upload error:\n\n' + sigErrs.join('\n'));
+                return false;
+            }
+
+            if (!confirm('Are you sure you want to submit this application? You will not be able to edit it after submission.')) {
+                e.preventDefault();
+                return false;
             }
         });
     }

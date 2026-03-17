@@ -114,7 +114,8 @@ class BursaryApplication(models.Model):
     institution = models.ForeignKey(
         Institution, 
         on_delete=models.SET_NULL, 
-        null=True, 
+        null=True,
+        blank=True,
         related_name='applications'
     )
     institution_name_other = models.CharField(
@@ -184,7 +185,178 @@ class BursaryApplication(models.Model):
         blank=True,
         help_text=_('Describe any special circumstances affecting your need for bursary')
     )
-    
+
+    # =====================================================================
+    # EXTENDED FIELDS (NG-CDF Bursary Application Standard)
+    # =====================================================================
+
+    # --- Extended Institutional Details ---
+    MODE_OF_STUDY_CHOICES = [
+        ('regular', 'Regular'),
+        ('parallel', 'Parallel'),
+        ('boarding', 'Boarding'),
+        ('day', 'Day Scholar'),
+    ]
+    campus_branch = models.CharField(_('campus/branch'), max_length=200, blank=True,
+        help_text=_('For tertiary institutions and universities'))
+    faculty_department = models.CharField(_('faculty/department'), max_length=200, blank=True,
+        help_text=_('For tertiary institutions and universities'))
+    mode_of_study = models.CharField(_('mode of study'), max_length=20,
+        choices=MODE_OF_STUDY_CHOICES, blank=True)
+    course_duration = models.IntegerField(_('course duration (years)'), null=True, blank=True,
+        validators=[MinValueValidator(1), MaxValueValidator(10)])
+    expected_completion = models.CharField(_('expected completion (MM/YYYY)'), max_length=10, blank=True)
+
+    # --- Family Status ---
+    FAMILY_STATUS_CHOICES = [
+        ('both_alive', 'Both Parents Alive'),
+        ('one_dead', 'One Parent Dead'),
+        ('both_dead', 'Both Parents Dead'),
+        ('single_parent', 'Single Parent'),
+        ('other', 'Other'),
+    ]
+    family_status = models.CharField(_('family status'), max_length=20,
+        choices=FAMILY_STATUS_CHOICES, blank=True)
+    family_status_other = models.CharField(_('other family status (specify)'), max_length=200, blank=True)
+    family_annual_income = models.DecimalField(_('estimated annual family income (KES)'),
+        max_digits=12, decimal_places=2, null=True, blank=True, validators=[MinValueValidator(0)])
+    family_annual_expenses = models.DecimalField(_('estimated annual family expenses (KES)'),
+        max_digits=12, decimal_places=2, null=True, blank=True, validators=[MinValueValidator(0)])
+
+    # --- Father's Details ---
+    EMPLOYMENT_TYPE_CHOICES = [
+        ('permanent', 'Permanent'),
+        ('contractual', 'Contractual'),
+        ('casual', 'Casual'),
+        ('retired', 'Retired'),
+        ('self_employed', 'Self Employed'),
+        ('none', 'None / Unemployed'),
+    ]
+    father_name = models.CharField(_("father's full name"), max_length=200, blank=True)
+    father_address = models.CharField(_("father's address"), max_length=200, blank=True)
+    father_telephone = models.CharField(_("father's telephone"), max_length=20, blank=True)
+    father_occupation = models.CharField(_("father's occupation"), max_length=200, blank=True)
+    father_employment_type = models.CharField(_("father's employment type"), max_length=20,
+        choices=EMPLOYMENT_TYPE_CHOICES, blank=True)
+    father_income_source = models.CharField(_("father's main source of income"), max_length=200, blank=True)
+
+    # --- Mother's Details ---
+    mother_name = models.CharField(_("mother's full name"), max_length=200, blank=True)
+    mother_address = models.CharField(_("mother's address"), max_length=200, blank=True)
+    mother_telephone = models.CharField(_("mother's telephone"), max_length=20, blank=True)
+    mother_occupation = models.CharField(_("mother's occupation"), max_length=200, blank=True)
+    mother_employment_type = models.CharField(_("mother's employment type"), max_length=20,
+        choices=EMPLOYMENT_TYPE_CHOICES, blank=True)
+    mother_income_source = models.CharField(_("mother's main source of income"), max_length=200, blank=True)
+
+    # --- Guardian Details (on the application, separate from user profile) ---
+    app_guardian_name = models.CharField(_("guardian's full name"), max_length=200, blank=True)
+    app_guardian_address = models.CharField(_("guardian's address"), max_length=200, blank=True)
+    app_guardian_telephone = models.CharField(_("guardian's telephone"), max_length=20, blank=True)
+    app_guardian_occupation = models.CharField(_("guardian's occupation"), max_length=200, blank=True)
+    app_guardian_employment_type = models.CharField(_("guardian's employment type"), max_length=20,
+        choices=EMPLOYMENT_TYPE_CHOICES, blank=True)
+    app_guardian_income_source = models.CharField(_("guardian's main source of income"), max_length=200, blank=True)
+
+    # --- Applicant's Additional Information ---
+    reason_for_applying = models.TextField(_('why are you applying for bursary assistance?'), blank=True)
+    previous_cdf_support = models.BooleanField(
+        _('received NG-CDF bursary in the past?'), default=False)
+    previous_cdf_support_details = models.TextField(
+        _('if yes, specify amount and when'), blank=True)
+    previous_other_support_received = models.BooleanField(
+        _('received bursary from other organizations?'), default=False)
+    previous_other_support_details = models.TextField(
+        _('if yes, provide details'), blank=True)
+    disability_details = models.TextField(
+        _('disability details'), blank=True,
+        help_text=_('If you have a disability, provide details'))
+    has_chronic_illness = models.BooleanField(_('has chronic illness'), default=False)
+    chronic_illness_details = models.TextField(_('chronic illness details'), blank=True)
+    parent_has_disability = models.BooleanField(
+        _('parent/guardian has disability'), default=False)
+    parent_disability_details = models.TextField(
+        _('parent/guardian disability details'), blank=True)
+    parent_has_chronic_illness = models.BooleanField(
+        _('parent/guardian has chronic illness'), default=False)
+    parent_chronic_illness_details = models.TextField(
+        _('parent/guardian chronic illness details'), blank=True)
+
+    # --- Academic Performance ---
+    ACADEMIC_PERFORMANCE_CHOICES = [
+        ('excellent', 'Excellent'),
+        ('very_good', 'Very Good'),
+        ('good', 'Good'),
+        ('fair', 'Fair'),
+        ('poor', 'Poor'),
+    ]
+    academic_performance = models.CharField(_('average academic performance'), max_length=20,
+        choices=ACADEMIC_PERFORMANCE_CHOICES, blank=True)
+    been_sent_away = models.BooleanField(
+        _('have you been sent away from school?'), default=False)
+    sent_away_reasons = models.TextField(_('reasons for absence'), blank=True)
+    sent_away_weeks = models.IntegerField(_('weeks away from school'), null=True, blank=True,
+        validators=[MinValueValidator(0)])
+    annual_fees_per_structure = models.DecimalField(
+        _('annual fees as per fee structure (KES)'),
+        max_digits=10, decimal_places=2, null=True, blank=True, validators=[MinValueValidator(0)])
+    last_term_balance = models.DecimalField(
+        _("last semester/term's fee balance (KES)"),
+        max_digits=10, decimal_places=2, null=True, blank=True, validators=[MinValueValidator(0)])
+    current_term_balance = models.DecimalField(
+        _("this semester/term's fee balance (KES)"),
+        max_digits=10, decimal_places=2, null=True, blank=True, validators=[MinValueValidator(0)])
+    next_term_balance = models.DecimalField(
+        _("next semester/term's fee balance (KES)"),
+        max_digits=10, decimal_places=2, null=True, blank=True, validators=[MinValueValidator(0)])
+    helb_loan_amount = models.DecimalField(
+        _('HELB loan amount (where applicable)'),
+        max_digits=10, decimal_places=2, null=True, blank=True, validators=[MinValueValidator(0)])
+
+    # --- Education Funding History ---
+    funding_source_secondary = models.CharField(
+        _('main funding source (secondary)'), max_length=200, blank=True)
+    funding_source_college = models.CharField(
+        _('main funding source (college)'), max_length=200, blank=True)
+    funding_source_university = models.CharField(
+        _('main funding source (university)'), max_length=200, blank=True)
+    other_funding_secondary = models.CharField(
+        _('other funding (secondary)'), max_length=200, blank=True)
+    other_funding_college = models.CharField(
+        _('other funding (college)'), max_length=200, blank=True)
+    other_funding_university = models.CharField(
+        _('other funding (university)'), max_length=200, blank=True)
+
+    # --- Referees ---
+    referee1_name = models.CharField(_('referee 1 name'), max_length=200, blank=True)
+    referee1_address = models.CharField(_('referee 1 address'), max_length=200, blank=True)
+    referee1_telephone = models.CharField(_('referee 1 telephone'), max_length=20, blank=True)
+    referee2_name = models.CharField(_('referee 2 name'), max_length=200, blank=True)
+    referee2_address = models.CharField(_('referee 2 address'), max_length=200, blank=True)
+    referee2_telephone = models.CharField(_('referee 2 telephone'), max_length=20, blank=True)
+
+    # --- Declarations ---
+    student_declaration_accepted = models.BooleanField(
+        _("student's declaration accepted"), default=False,
+        help_text=_('Student confirms all information is true and accurate'))
+    guardian_declaration_accepted = models.BooleanField(
+        _("parent/guardian declaration accepted"), default=False,
+        help_text=_('Student confirms on behalf of parent/guardian'))
+    declaration_accepted_at = models.DateTimeField(
+        _('declaration accepted at'), null=True, blank=True)
+
+    # --- Optional Signature Uploads ---
+    student_signature = models.ImageField(
+        _("student's signature"),
+        upload_to='signatures/students/',
+        blank=True,
+        help_text=_('Upload an image of your signature (optional, for printed form)'))
+    guardian_signature = models.ImageField(
+        _("parent/guardian's signature"),
+        upload_to='signatures/guardians/',
+        blank=True,
+        help_text=_('Upload an image of parent/guardian signature (optional)'))
+
     # Status and tracking
     status = models.CharField(
         _('status'), 
@@ -314,14 +486,20 @@ class ApplicationDocument(models.Model):
     Model for documents uploaded with bursary applications
     """
     DOCUMENT_TYPES = [
-        ('admission_letter', 'Admission Letter'),
-        ('fee_structure', 'Fee Structure'),
-        ('transcript', 'Academic Transcript/Report Card'),
-        ('id_copy', 'ID Card Copy'),
-        ('birth_certificate', 'Birth Certificate'),
-        ('parent_id', 'Parent/Guardian ID Copy'),
-        ('death_certificate', 'Death Certificate (if orphan)'),
+        # Mandatory for all applicants (NG-CDF order)
+        ('transcript', "1. Student's Transcript / Report Form"),
+        ('parent_id', "2. Parent's / Guardian's National ID Copy"),
+        ('student_id', "3. Student's National ID Copy (mandatory post-school)"),
+        ('birth_certificate', '4. Birth Certificate Copy'),
+        ('school_id', '5. Secondary / College / University ID Card Copy'),
+        ('death_certificate', '6. Death Certificate / Burial Permit (mandatory for orphans)'),
+        ('fee_structure', '7. Current Fees Structure (mandatory for all)'),
+        ('admission_letter', '8. Admission Letter (mandatory for colleges & universities)'),
+        # Additional supporting documents
         ('disability_cert', 'Disability Certificate'),
+        ('medical_report', 'Medical Report / Chronic Illness Evidence'),
+        ('chief_letter', 'Verification Letter from Area Chief / Sub-Chief'),
+        ('recommendation_letter', 'Recommendation Letter'),
         ('bank_slip', 'Bank Deposit Slip'),
         ('other', 'Other Supporting Document'),
     ]

@@ -1,349 +1,558 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Application {{ application.application_number }} - {{ block.super }}{% endblock %}
 
+{% block extra_css %}
+<style>
+/* ===== Screen Styles ===== */
+.detail-section { border: none; border-radius: 0; box-shadow: none; border-bottom: 1px solid #e2e6ec; }
+.detail-section:last-of-type { border-bottom: none; }
+.detail-section-header { background: #f7f8fa; border-bottom: 1px solid #e2e6ec; padding: 0.85rem 1.25rem; }
+.detail-section-header h5 { font-family: 'DM Serif Display', Georgia, serif; color: #0f2b46; margin: 0; font-size: 1rem; }
+.detail-section-header .sec-icon { color: #c9a84c; margin-right: 0.4rem; }
+.detail-section-body { padding: 1.25rem; }
+.dl { font-size: 0.9rem; }
+.dl-label { color: #5a6a7e; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.15rem; }
+.dl-value { color: #0f2b46; font-weight: 500; margin-bottom: 0.75rem; }
+.dl-value.empty { color: #d1d8e0; font-style: italic; font-weight: 400; }
+.dl-value.money { font-family: 'DM Serif Display', Georgia, serif; font-size: 1.1rem; }
+.parent-block { background: #f7f8fa; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+.parent-block h6 { font-family: 'DM Serif Display', Georgia, serif; color: #0f2b46; margin-bottom: 0.75rem; font-size: 0.95rem; }
+.circ-badge { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.3em 0.85em; border-radius: 50px; font-size: 0.8rem; font-weight: 600; margin-right: 0.4rem; margin-bottom: 0.4rem; }
+.circ-yes { background: rgba(192,57,43,0.08); color: #c0392b; border: 1px solid rgba(192,57,43,0.15); }
+.circ-no  { background: #eef1f5; color: #5a6a7e; }
+
+/* ===== Print Stylesheet ===== */
+@media print {
+    .navbar, footer, .no-print, .btn, .alert-dismissible .btn-close, .actions-card,
+    .screen-sidebar { display: none !important; }
+    body { background: white !important; color: #000 !important; font-size: 9.5pt; line-height: 1.35; }
+    .container { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
+    .main-content-col { width: 100% !important; max-width: 100% !important; flex: 0 0 100% !important; }
+    .detail-wrapper { border: none !important; box-shadow: none !important; }
+    .detail-section { border-bottom: 1px solid #ccc !important; page-break-inside: avoid; }
+    .detail-section-header { background: none !important; border-bottom: 2px solid #0f2b46 !important; padding: 0.25rem 0 !important; }
+    .detail-section-header h5 { font-size: 11pt !important; }
+    .detail-section-body { padding: 0.4rem 0 !important; }
+    .dl-label { font-size: 7.5pt; }
+    .dl-value { font-size: 9.5pt; margin-bottom: 0.3rem; }
+    .dl-value.money { font-size: 10pt; }
+    .parent-block { background: none !important; border: 1px solid #ccc; padding: 0.5rem; margin-bottom: 0.5rem; }
+    .badge { border: 1px solid #999 !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    .row { display: flex !important; flex-wrap: wrap !important; }
+    .col-sm-2, .col-sm-3, .col-sm-4, .col-sm-6, .col-sm-12 { float: left; }
+    .col-sm-2 { width: 16.66% !important; } .col-sm-3 { width: 25% !important; }
+    .col-sm-4 { width: 33.33% !important; } .col-sm-6 { width: 50% !important; }
+    .col-sm-12 { width: 100% !important; }
+    /* Letterhead */
+    .print-letterhead { display: block !important; }
+    .print-letterhead .lh-inner { text-align: center; border-bottom: 3px double #0f2b46; padding-bottom: 0.6rem; margin-bottom: 0.75rem; }
+    .print-letterhead h1 { font-size: 15pt; color: #0f2b46; margin: 0; }
+    .print-letterhead h2 { font-size: 11pt; color: #0f2b46; margin: 0.1rem 0; }
+    .print-letterhead p { font-size: 8pt; color: #333; margin: 0; }
+    .print-letterhead .ref-line { font-size: 9pt; margin-top: 0.5rem; display: flex; justify-content: space-between; }
+    /* Signatures & Footer */
+    .print-signatures { display: block !important; margin-top: 1.5rem; page-break-inside: avoid; }
+    .sig-block { display: inline-block; width: 30%; text-align: center; }
+    .sig-line { border-bottom: 1px solid #333; width: 90%; display: inline-block; margin-bottom: 0.2rem; height: 1.5rem; }
+    .sig-label { font-size: 8pt; color: #666; }
+    .print-footer { display: block !important; margin-top: 1rem; border-top: 1px solid #ccc; padding-top: 0.3rem; font-size: 7.5pt; color: #666; text-align: center; }
+    .print-declarations { display: block !important; page-break-inside: avoid; }
+}
+@media screen { .print-letterhead, .print-footer, .print-signatures, .print-declarations { display: none; } }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h2>Application Details</h2>
-            <p class="text-muted mb-0">Application Number: <strong>{{ application.application_number }}</strong></p>
-        </div>
-        <div>
-            <span class="badge badge-{{ application.status }} fs-6">
-                {{ application.get_status_display }}
-            </span>
+<div class="container mt-4 mb-5">
+
+    <!-- ====== Print Letterhead ====== -->
+    <div class="print-letterhead">
+        <div class="lh-inner">
+            <h1>National Government Constituencies Development Fund</h1>
+            <h2>{{ CONSTITUENCY_NAME|default:"Constituency" }} — Bursary Application Form</h2>
+            <p>Baringo County, Kenya &bull; Tel: {{ CONSTITUENCY_PHONE|default:"+254700000000" }} &bull; Email: {{ CONSTITUENCY_EMAIL|default:"info@constituency.go.ke" }}</p>
+            <div class="ref-line">
+                <span><strong>S/No:</strong> {{ application.application_number }}</span>
+                <span><strong>Academic Year:</strong> {{ application.academic_year.year }}</span>
+                <span><strong>Status:</strong> {{ application.get_status_display }}</span>
+            </div>
         </div>
     </div>
-    
-    <!-- Action Buttons -->
-    <div class="mb-4">
+
+    <!-- ====== Screen Header ====== -->
+    <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+        <div>
+            <h2 style="font-family: 'DM Serif Display', Georgia, serif; color: #0f2b46;">Application Details</h2>
+            <p style="color: #5a6a7e; margin-bottom: 0;">Ref: <strong style="color: #0f2b46;">{{ application.application_number }}</strong> &bull; {{ application.academic_year.year }}</p>
+        </div>
+        <span class="badge badge-{{ application.status }}" style="font-size: 0.9rem; padding: 0.5em 1em;">{{ application.get_status_display }}</span>
+    </div>
+
+    <!-- ====== Action Buttons ====== -->
+    <div class="mb-4 no-print d-flex flex-wrap gap-2">
         {% if application.is_editable and application.applicant == user %}
-            <a href="{% url 'bursary:application_update' application.pk %}" class="btn btn-primary">
-                <i class="fas fa-edit"></i> Edit Application
-            </a>
+            <a href="{% url 'bursary:application_update' application.pk %}" class="btn btn-primary"><i class="fas fa-edit"></i> Edit</a>
+            <a href="{% url 'bursary:document_upload' application.pk %}" class="btn btn-success"><i class="fas fa-upload"></i> Documents</a>
         {% endif %}
-        
-        {% if application.status == 'draft' and application.applicant == user %}
-            <a href="{% url 'bursary:document_upload' application.pk %}" class="btn btn-success">
-                <i class="fas fa-upload"></i> Upload Documents
-            </a>
-        {% endif %}
-        
         {% if user.can_review_applications %}
-            <a href="{% url 'bursary:application_review' application.pk %}" class="btn btn-warning">
-                <i class="fas fa-gavel"></i> Review Application
-            </a>
+            <a href="{% url 'bursary:application_review' application.pk %}" class="btn btn-warning"><i class="fas fa-gavel"></i> Review</a>
         {% endif %}
-        
-        <button onclick="window.print()" class="btn btn-outline-secondary">
-            <i class="fas fa-print"></i> Print
-        </button>
+        <button onclick="window.print()" class="btn" style="background: transparent; border: 1.5px solid #0f2b46; color: #0f2b46;"><i class="fas fa-print"></i> Print</button>
     </div>
-    
+
     <div class="row">
-        <div class="col-md-8">
-            <!-- Applicant Information -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="fas fa-user"></i> Applicant Information</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-sm-6 mb-3">
-                            <label class="text-muted small">Full Name</label>
-                            <p class="mb-0"><strong>{{ application.applicant.get_full_name }}</strong></p>
-                        </div>
-                        <div class="col-sm-6 mb-3">
-                            <label class="text-muted small">ID Number</label>
-                            <p class="mb-0"><strong>{{ application.applicant.id_number }}</strong></p>
-                        </div>
-                        <div class="col-sm-6 mb-3">
-                            <label class="text-muted small">Phone Number</label>
-                            <p class="mb-0">{{ application.applicant.phone_number }}</p>
-                        </div>
-                        <div class="col-sm-6 mb-3">
-                            <label class="text-muted small">Email</label>
-                            <p class="mb-0">{{ application.applicant.email }}</p>
-                        </div>
-                        <div class="col-sm-6 mb-3">
-                            <label class="text-muted small">Ward</label>
-                            <p class="mb-0">{{ application.applicant.ward }}</p>
-                        </div>
-                        <div class="col-sm-6 mb-3">
-                            <label class="text-muted small">Location</label>
-                            <p class="mb-0">{{ application.applicant.location|default:"Not specified" }}</p>
+        <!-- ====== MAIN CONTENT ====== -->
+        <div class="col-md-8 main-content-col">
+            <div class="detail-wrapper" style="background: #fff; border: 1px solid #e2e6ec; border-radius: 12px; overflow: hidden;">
+
+                <!-- PART A: PERSONAL & INSTITUTIONAL -->
+                <div class="detail-section">
+                    <div class="detail-section-header">
+                        <h5><i class="fas fa-user sec-icon"></i> Part A (i): Applicant &amp; Institutional Details</h5>
+                    </div>
+                    <div class="detail-section-body">
+                        <div class="row dl">
+                            <div class="col-sm-6"><div class="dl-label">Full Name</div><div class="dl-value">{{ application.applicant.get_full_name }}</div></div>
+                            <div class="col-sm-3"><div class="dl-label">Gender</div><div class="dl-value">{{ application.applicant.profile.get_gender_display|default:"—" }}</div></div>
+                            <div class="col-sm-3"><div class="dl-label">Date of Birth</div><div class="dl-value">{{ application.applicant.date_of_birth|date:"d/m/Y"|default:"—" }}</div></div>
+                            <div class="col-sm-4"><div class="dl-label">ID / Passport No.</div><div class="dl-value">{{ application.applicant.id_number }}</div></div>
+                            <div class="col-sm-4"><div class="dl-label">Phone</div><div class="dl-value">{{ application.applicant.phone_number }}</div></div>
+                            <div class="col-sm-4"><div class="dl-label">Email</div><div class="dl-value">{{ application.applicant.email }}</div></div>
+                            <div class="col-sm-12"><hr style="border-color:#eef1f5; margin:0.25rem 0;"></div>
+                            <div class="col-sm-6"><div class="dl-label">Institution</div><div class="dl-value">{{ application.institution.name|default:application.institution_name_other|default:"—" }}</div></div>
+                            <div class="col-sm-3"><div class="dl-label">Education Level</div><div class="dl-value">{{ application.get_education_level_display }}</div></div>
+                            <div class="col-sm-3"><div class="dl-label">Admission No.</div><div class="dl-value">{{ application.admission_number }}</div></div>
+                            <div class="col-sm-4"><div class="dl-label">Campus / Branch</div><div class="dl-value {% if not application.campus_branch %}empty{% endif %}">{{ application.campus_branch|default:"—" }}</div></div>
+                            <div class="col-sm-4"><div class="dl-label">Faculty / Department</div><div class="dl-value {% if not application.faculty_department %}empty{% endif %}">{{ application.faculty_department|default:"—" }}</div></div>
+                            <div class="col-sm-4"><div class="dl-label">Course / Class</div><div class="dl-value">{{ application.course_name }}</div></div>
+                            <div class="col-sm-3"><div class="dl-label">Mode of Study</div><div class="dl-value {% if not application.mode_of_study %}empty{% endif %}">{{ application.get_mode_of_study_display|default:"—" }}</div></div>
+                            <div class="col-sm-3"><div class="dl-label">Year of Study</div><div class="dl-value">{{ application.year_of_study }}</div></div>
+                            <div class="col-sm-3"><div class="dl-label">Course Duration</div><div class="dl-value {% if not application.course_duration %}empty{% endif %}">{% if application.course_duration %}{{ application.course_duration }} years{% else %}—{% endif %}</div></div>
+                            <div class="col-sm-3"><div class="dl-label">Expected Completion</div><div class="dl-value {% if not application.expected_completion %}empty{% endif %}">{{ application.expected_completion|default:"—" }}</div></div>
+                            <div class="col-sm-12"><hr style="border-color:#eef1f5; margin:0.25rem 0;"></div>
+                            <div class="col-sm-3"><div class="dl-label">Ward</div><div class="dl-value">{{ application.applicant.ward|default:"—" }}</div></div>
+                            <div class="col-sm-3"><div class="dl-label">Location</div><div class="dl-value">{{ application.applicant.location|default:"—" }}</div></div>
+                            <div class="col-sm-3"><div class="dl-label">Sub-Location</div><div class="dl-value">{{ application.applicant.sub_location|default:"—" }}</div></div>
+                            <div class="col-sm-3"><div class="dl-label">Village</div><div class="dl-value">{{ application.applicant.village|default:"—" }}</div></div>
                         </div>
                     </div>
                 </div>
-            </div>
-            
-            <!-- Educational Information -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="fas fa-graduation-cap"></i> Educational Information</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-sm-6 mb-3">
-                            <label class="text-muted small">Academic Year</label>
-                            <p class="mb-0"><strong>{{ application.academic_year.year }}</strong></p>
-                        </div>
-                        <div class="col-sm-6 mb-3">
-                            <label class="text-muted small">Education Level</label>
-                            <p class="mb-0"><strong>{{ application.get_education_level_display }}</strong></p>
-                        </div>
-                        <div class="col-sm-12 mb-3">
-                            <label class="text-muted small">Institution</label>
-                            <p class="mb-0"><strong>{{ application.institution.name|default:application.institution_name_other }}</strong></p>
-                        </div>
-                        <div class="col-sm-6 mb-3">
-                            <label class="text-muted small">Admission Number</label>
-                            <p class="mb-0">{{ application.admission_number }}</p>
-                        </div>
-                        <div class="col-sm-6 mb-3">
-                            <label class="text-muted small">Year of Study</label>
-                            <p class="mb-0">{{ application.year_of_study }}</p>
-                        </div>
-                        <div class="col-sm-12 mb-3">
-                            <label class="text-muted small">Course/Class</label>
-                            <p class="mb-0">{{ application.course_name }}</p>
+
+                <!-- FINANCIAL INFORMATION -->
+                <div class="detail-section">
+                    <div class="detail-section-header">
+                        <h5><i class="fas fa-money-bill-wave sec-icon"></i> Financial Information</h5>
+                    </div>
+                    <div class="detail-section-body">
+                        <div class="row dl">
+                            <div class="col-sm-4"><div class="dl-label">Total Fees Required</div><div class="dl-value money">KES {{ application.total_fees|floatformat:2 }}</div></div>
+                            <div class="col-sm-4"><div class="dl-label">Amount Applied For</div><div class="dl-value money" style="color: #c9a84c;">KES {{ application.amount_requested|floatformat:2 }}</div></div>
+                            <div class="col-sm-4"><div class="dl-label">Other Financial Support</div><div class="dl-value money">KES {{ application.other_support|floatformat:2 }}</div></div>
+                            {% if application.approved_amount %}
+                            <div class="col-sm-4"><div class="dl-label">Approved Amount</div><div class="dl-value money" style="color: #1a8754;">KES {{ application.approved_amount|floatformat:2 }}</div></div>
+                            {% endif %}
+                            <div class="col-sm-4"><div class="dl-label">Annual Fees (per structure)</div><div class="dl-value">{% if application.annual_fees_per_structure %}KES {{ application.annual_fees_per_structure|floatformat:2 }}{% else %}—{% endif %}</div></div>
+                            <div class="col-sm-4"><div class="dl-label">HELB Loan</div><div class="dl-value">{% if application.helb_loan_amount %}KES {{ application.helb_loan_amount|floatformat:2 }}{% else %}—{% endif %}</div></div>
+                            <div class="col-sm-4"><div class="dl-label">Last Term Balance</div><div class="dl-value">{% if application.last_term_balance %}KES {{ application.last_term_balance|floatformat:2 }}{% else %}—{% endif %}</div></div>
+                            <div class="col-sm-4"><div class="dl-label">This Term Balance</div><div class="dl-value">{% if application.current_term_balance %}KES {{ application.current_term_balance|floatformat:2 }}{% else %}—{% endif %}</div></div>
+                            <div class="col-sm-4"><div class="dl-label">Next Term Balance</div><div class="dl-value">{% if application.next_term_balance %}KES {{ application.next_term_balance|floatformat:2 }}{% else %}—{% endif %}</div></div>
                         </div>
                     </div>
                 </div>
-            </div>
-            
-            <!-- Financial Information -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="fas fa-money-bill-wave"></i> Financial Information</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-sm-4 mb-3">
-                            <label class="text-muted small">Total Fees</label>
-                            <p class="mb-0 h5">KES {{ application.total_fees|floatformat:2 }}</p>
-                        </div>
-                        <div class="col-sm-4 mb-3">
-                            <label class="text-muted small">Amount Requested</label>
-                            <p class="mb-0 h5 text-primary">KES {{ application.amount_requested|floatformat:2 }}</p>
-                        </div>
-                        <div class="col-sm-4 mb-3">
-                            <label class="text-muted small">Other Support</label>
-                            <p class="mb-0 h5">KES {{ application.other_support|floatformat:2 }}</p>
-                        </div>
-                        {% if application.approved_amount %}
-                        <div class="col-sm-4 mb-3">
-                            <label class="text-muted small">Approved Amount</label>
-                            <p class="mb-0 h5 text-success">KES {{ application.approved_amount|floatformat:2 }}</p>
-                        </div>
-                        {% endif %}
-                        <div class="col-sm-4 mb-3">
-                            <label class="text-muted small">Family Monthly Income</label>
-                            <p class="mb-0">KES {{ application.family_monthly_income|floatformat:2 }}</p>
-                        </div>
-                        <div class="col-sm-4 mb-3">
-                            <label class="text-muted small">Balance Needed</label>
-                            <p class="mb-0">KES {{ application.balance_needed|floatformat:2 }}</p>
-                        </div>
+
+                <!-- PART A (ii): FAMILY BACKGROUND -->
+                <div class="detail-section">
+                    <div class="detail-section-header">
+                        <h5><i class="fas fa-users sec-icon"></i> Part A (ii): Family Background</h5>
                     </div>
-                </div>
-            </div>
-            
-            <!-- Family Background -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="fas fa-users"></i> Family Background</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-sm-6 mb-3">
-                            <label class="text-muted small">Number of Siblings</label>
-                            <p class="mb-0">{{ application.number_of_siblings }}</p>
+                    <div class="detail-section-body">
+                        <div class="row dl">
+                            <div class="col-sm-4"><div class="dl-label">Family Status</div><div class="dl-value">{{ application.get_family_status_display|default:"—" }}{% if application.family_status_other %} — {{ application.family_status_other }}{% endif %}</div></div>
+                            <div class="col-sm-4"><div class="dl-label">Monthly Income (KES)</div><div class="dl-value">KES {{ application.family_monthly_income|floatformat:2 }}</div></div>
+                            <div class="col-sm-4"><div class="dl-label">Annual Income (KES)</div><div class="dl-value">{% if application.family_annual_income %}KES {{ application.family_annual_income|floatformat:2 }}{% else %}—{% endif %}</div></div>
+                            <div class="col-sm-4"><div class="dl-label">Annual Expenses (KES)</div><div class="dl-value">{% if application.family_annual_expenses %}KES {{ application.family_annual_expenses|floatformat:2 }}{% else %}—{% endif %}</div></div>
+                            <div class="col-sm-4"><div class="dl-label">No. of Siblings</div><div class="dl-value">{{ application.number_of_siblings }}</div></div>
+                            <div class="col-sm-4"><div class="dl-label">Siblings in School</div><div class="dl-value">{{ application.siblings_in_school }}</div></div>
                         </div>
-                        <div class="col-sm-6 mb-3">
-                            <label class="text-muted small">Siblings in School</label>
-                            <p class="mb-0">{{ application.siblings_in_school }}</p>
-                        </div>
-                        <div class="col-12">
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="checkbox" {% if application.is_orphan %}checked{% endif %} disabled>
-                                <label class="form-check-label">Orphan</label>
-                            </div>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="checkbox" {% if application.is_single_parent %}checked{% endif %} disabled>
-                                <label class="form-check-label">Single Parent Family</label>
-                            </div>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="checkbox" {% if application.has_disability %}checked{% endif %} disabled>
-                                <label class="form-check-label">Has Disability</label>
+
+                        <!-- Father -->
+                        <div class="parent-block">
+                            <h6>a) Father's Details</h6>
+                            <div class="row dl">
+                                <div class="col-sm-4"><div class="dl-label">Full Name</div><div class="dl-value {% if not application.father_name %}empty{% endif %}">{{ application.father_name|default:"—" }}</div></div>
+                                <div class="col-sm-4"><div class="dl-label">Telephone</div><div class="dl-value {% if not application.father_telephone %}empty{% endif %}">{{ application.father_telephone|default:"—" }}</div></div>
+                                <div class="col-sm-4"><div class="dl-label">Address</div><div class="dl-value {% if not application.father_address %}empty{% endif %}">{{ application.father_address|default:"—" }}</div></div>
+                                <div class="col-sm-4"><div class="dl-label">Occupation</div><div class="dl-value {% if not application.father_occupation %}empty{% endif %}">{{ application.father_occupation|default:"—" }}</div></div>
+                                <div class="col-sm-4"><div class="dl-label">Employment Type</div><div class="dl-value {% if not application.father_employment_type %}empty{% endif %}">{{ application.get_father_employment_type_display|default:"—" }}</div></div>
+                                <div class="col-sm-4"><div class="dl-label">Main Income Source</div><div class="dl-value {% if not application.father_income_source %}empty{% endif %}">{{ application.father_income_source|default:"—" }}</div></div>
                             </div>
                         </div>
-                        {% if application.special_circumstances %}
-                        <div class="col-12 mt-3">
-                            <label class="text-muted small">Special Circumstances</label>
-                            <p class="mb-0">{{ application.special_circumstances|linebreaks }}</p>
+
+                        <!-- Mother -->
+                        <div class="parent-block">
+                            <h6>b) Mother's Details</h6>
+                            <div class="row dl">
+                                <div class="col-sm-4"><div class="dl-label">Full Name</div><div class="dl-value {% if not application.mother_name %}empty{% endif %}">{{ application.mother_name|default:"—" }}</div></div>
+                                <div class="col-sm-4"><div class="dl-label">Telephone</div><div class="dl-value {% if not application.mother_telephone %}empty{% endif %}">{{ application.mother_telephone|default:"—" }}</div></div>
+                                <div class="col-sm-4"><div class="dl-label">Address</div><div class="dl-value {% if not application.mother_address %}empty{% endif %}">{{ application.mother_address|default:"—" }}</div></div>
+                                <div class="col-sm-4"><div class="dl-label">Occupation</div><div class="dl-value {% if not application.mother_occupation %}empty{% endif %}">{{ application.mother_occupation|default:"—" }}</div></div>
+                                <div class="col-sm-4"><div class="dl-label">Employment Type</div><div class="dl-value {% if not application.mother_employment_type %}empty{% endif %}">{{ application.get_mother_employment_type_display|default:"—" }}</div></div>
+                                <div class="col-sm-4"><div class="dl-label">Main Income Source</div><div class="dl-value {% if not application.mother_income_source %}empty{% endif %}">{{ application.mother_income_source|default:"—" }}</div></div>
+                            </div>
+                        </div>
+
+                        <!-- Guardian -->
+                        {% if application.app_guardian_name %}
+                        <div class="parent-block">
+                            <h6>c) Guardian's Details</h6>
+                            <div class="row dl">
+                                <div class="col-sm-4"><div class="dl-label">Full Name</div><div class="dl-value">{{ application.app_guardian_name }}</div></div>
+                                <div class="col-sm-4"><div class="dl-label">Telephone</div><div class="dl-value">{{ application.app_guardian_telephone|default:"—" }}</div></div>
+                                <div class="col-sm-4"><div class="dl-label">Address</div><div class="dl-value">{{ application.app_guardian_address|default:"—" }}</div></div>
+                                <div class="col-sm-4"><div class="dl-label">Occupation</div><div class="dl-value">{{ application.app_guardian_occupation|default:"—" }}</div></div>
+                                <div class="col-sm-4"><div class="dl-label">Employment Type</div><div class="dl-value">{{ application.get_app_guardian_employment_type_display|default:"—" }}</div></div>
+                                <div class="col-sm-4"><div class="dl-label">Main Income Source</div><div class="dl-value">{{ application.app_guardian_income_source|default:"—" }}</div></div>
+                            </div>
                         </div>
                         {% endif %}
                     </div>
                 </div>
-            </div>
-            
-            <!-- Documents -->
-            <div class="card mb-4">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="fas fa-paperclip"></i> Uploaded Documents</h5>
-                    {% if application.is_editable and application.applicant == user %}
-                        <a href="{% url 'bursary:document_upload' application.pk %}" class="btn btn-sm btn-primary">
-                            <i class="fas fa-plus"></i> Add Document
-                        </a>
-                    {% endif %}
+
+                <!-- SPECIAL CIRCUMSTANCES & ADDITIONAL INFO -->
+                <div class="detail-section">
+                    <div class="detail-section-header">
+                        <h5><i class="fas fa-hand-holding-heart sec-icon"></i> Part A (iii): Special Circumstances &amp; Additional Info</h5>
+                    </div>
+                    <div class="detail-section-body">
+                        <div class="row dl">
+                            <div class="col-sm-12 mb-2">
+                                <span class="circ-badge {% if application.is_orphan %}circ-yes{% else %}circ-no{% endif %}"><i class="fas fa-{% if application.is_orphan %}check{% else %}times{% endif %}"></i> Orphan</span>
+                                <span class="circ-badge {% if application.is_single_parent %}circ-yes{% else %}circ-no{% endif %}"><i class="fas fa-{% if application.is_single_parent %}check{% else %}times{% endif %}"></i> Single Parent</span>
+                                <span class="circ-badge {% if application.has_disability %}circ-yes{% else %}circ-no{% endif %}"><i class="fas fa-{% if application.has_disability %}check{% else %}times{% endif %}"></i> Disability</span>
+                                <span class="circ-badge {% if application.has_chronic_illness %}circ-yes{% else %}circ-no{% endif %}"><i class="fas fa-{% if application.has_chronic_illness %}check{% else %}times{% endif %}"></i> Chronic Illness</span>
+                                <span class="circ-badge {% if application.parent_has_disability %}circ-yes{% else %}circ-no{% endif %}"><i class="fas fa-{% if application.parent_has_disability %}check{% else %}times{% endif %}"></i> Parent Disability</span>
+                                <span class="circ-badge {% if application.parent_has_chronic_illness %}circ-yes{% else %}circ-no{% endif %}"><i class="fas fa-{% if application.parent_has_chronic_illness %}check{% else %}times{% endif %}"></i> Parent Chronic Illness</span>
+                            </div>
+                            {% if application.reason_for_applying %}
+                            <div class="col-sm-12"><div class="dl-label">Reason for Applying</div><div class="dl-value">{{ application.reason_for_applying|linebreaks }}</div></div>
+                            {% endif %}
+                            {% if application.disability_details %}
+                            <div class="col-sm-12"><div class="dl-label">Disability Details</div><div class="dl-value">{{ application.disability_details }}</div></div>
+                            {% endif %}
+                            {% if application.chronic_illness_details %}
+                            <div class="col-sm-12"><div class="dl-label">Chronic Illness Details</div><div class="dl-value">{{ application.chronic_illness_details }}</div></div>
+                            {% endif %}
+                            {% if application.parent_disability_details %}
+                            <div class="col-sm-12"><div class="dl-label">Parent/Guardian Disability Details</div><div class="dl-value">{{ application.parent_disability_details }}</div></div>
+                            {% endif %}
+                            {% if application.parent_chronic_illness_details %}
+                            <div class="col-sm-12"><div class="dl-label">Parent/Guardian Chronic Illness Details</div><div class="dl-value">{{ application.parent_chronic_illness_details }}</div></div>
+                            {% endif %}
+                            {% if application.special_circumstances %}
+                            <div class="col-sm-12"><div class="dl-label">Other Special Circumstances</div><div class="dl-value">{{ application.special_circumstances|linebreaks }}</div></div>
+                            {% endif %}
+                            <div class="col-sm-6">
+                                <div class="dl-label">Previous NG-CDF Bursary?</div>
+                                <div class="dl-value">{% if application.previous_cdf_support %}Yes — {{ application.previous_cdf_support_details|default:"Details not provided" }}{% else %}No{% endif %}</div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="dl-label">Bursary from Other Organisations?</div>
+                                <div class="dl-value">{% if application.previous_other_support_received %}Yes — {{ application.previous_other_support_details|default:"Details not provided" }}{% else %}No{% endif %}</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    {% if documents %}
-                        <div class="list-group">
-                            {% for doc in documents %}
-                            <div class="list-group-item d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="mb-1">{{ doc.get_document_type_display }}</h6>
-                                    <p class="mb-0 text-muted small">
-                                        {% if doc.description %}{{ doc.description }} • {% endif %}
-                                        Uploaded {{ doc.uploaded_at|date:"d M Y" }}
-                                    </p>
+
+                <!-- PART B: ACADEMIC PERFORMANCE -->
+                <div class="detail-section">
+                    <div class="detail-section-header">
+                        <h5><i class="fas fa-chart-line sec-icon"></i> Part B: Academic Performance</h5>
+                    </div>
+                    <div class="detail-section-body">
+                        <div class="row dl">
+                            <div class="col-sm-4"><div class="dl-label">Average Performance</div><div class="dl-value">{{ application.get_academic_performance_display|default:"—" }}</div></div>
+                            <div class="col-sm-4"><div class="dl-label">Sent Away from School?</div><div class="dl-value">{% if application.been_sent_away %}Yes{% if application.sent_away_weeks %} — {{ application.sent_away_weeks }} weeks{% endif %}{% else %}No{% endif %}</div></div>
+                            {% if application.sent_away_reasons %}
+                            <div class="col-sm-12"><div class="dl-label">Reasons for Absence</div><div class="dl-value">{{ application.sent_away_reasons }}</div></div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- EDUCATION FUNDING HISTORY -->
+                {% if application.funding_source_secondary or application.funding_source_college or application.funding_source_university %}
+                <div class="detail-section">
+                    <div class="detail-section-header">
+                        <h5><i class="fas fa-history sec-icon"></i> Education Funding History</h5>
+                    </div>
+                    <div class="detail-section-body">
+                        <div class="row dl">
+                            <div class="col-sm-4"><div class="dl-label">Main Source — Secondary</div><div class="dl-value">{{ application.funding_source_secondary|default:"—" }}</div></div>
+                            <div class="col-sm-4"><div class="dl-label">Main Source — College</div><div class="dl-value">{{ application.funding_source_college|default:"—" }}</div></div>
+                            <div class="col-sm-4"><div class="dl-label">Main Source — University</div><div class="dl-value">{{ application.funding_source_university|default:"—" }}</div></div>
+                            <div class="col-sm-4"><div class="dl-label">Other Funding — Secondary</div><div class="dl-value">{{ application.other_funding_secondary|default:"—" }}</div></div>
+                            <div class="col-sm-4"><div class="dl-label">Other Funding — College</div><div class="dl-value">{{ application.other_funding_college|default:"—" }}</div></div>
+                            <div class="col-sm-4"><div class="dl-label">Other Funding — University</div><div class="dl-value">{{ application.other_funding_university|default:"—" }}</div></div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- REFEREES -->
+                {% if application.referee1_name or application.referee2_name %}
+                <div class="detail-section">
+                    <div class="detail-section-header">
+                        <h5><i class="fas fa-user-friends sec-icon"></i> Referees</h5>
+                    </div>
+                    <div class="detail-section-body">
+                        <div class="row dl">
+                            {% if application.referee1_name %}
+                            <div class="col-sm-4"><div class="dl-label">Referee 1 — Name</div><div class="dl-value">{{ application.referee1_name }}</div></div>
+                            <div class="col-sm-4"><div class="dl-label">Address</div><div class="dl-value">{{ application.referee1_address|default:"—" }}</div></div>
+                            <div class="col-sm-4"><div class="dl-label">Telephone</div><div class="dl-value">{{ application.referee1_telephone|default:"—" }}</div></div>
+                            {% endif %}
+                            {% if application.referee2_name %}
+                            <div class="col-sm-4"><div class="dl-label">Referee 2 — Name</div><div class="dl-value">{{ application.referee2_name }}</div></div>
+                            <div class="col-sm-4"><div class="dl-label">Address</div><div class="dl-value">{{ application.referee2_address|default:"—" }}</div></div>
+                            <div class="col-sm-4"><div class="dl-label">Telephone</div><div class="dl-value">{{ application.referee2_telephone|default:"—" }}</div></div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- UPLOADED DOCUMENTS -->
+                <div class="detail-section">
+                    <div class="detail-section-header" style="display: flex; justify-content: space-between; align-items: center;">
+                        <h5><i class="fas fa-paperclip sec-icon"></i> Key Attachments</h5>
+                        {% if application.is_editable and application.applicant == user %}
+                        <a href="{% url 'bursary:document_upload' application.pk %}" class="btn btn-sm btn-primary no-print"><i class="fas fa-plus"></i> Add</a>
+                        {% endif %}
+                    </div>
+                    <div class="detail-section-body">
+                        {% if documents %}
+                        {% for doc in documents %}
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0; {% if not forloop.last %}border-bottom: 1px solid #eef1f5;{% endif %}">
+                            <div>
+                                <span style="font-weight: 600; color: #0f2b46; font-size: 0.9rem;">{{ doc.get_document_type_display }}</span>
+                                <br><small style="color: #5a6a7e;">{% if doc.description %}{{ doc.description }} &bull; {% endif %}{{ doc.uploaded_at|date:"d M Y" }}</small>
+                            </div>
+                            <div class="no-print">
+                                {% if user.can_review_applications %}
+                                <a href="{% url 'bursary:document_download' application.pk doc.pk %}" class="btn btn-sm" style="border: 1px solid #e2e6ec; color: #0f2b46;"><i class="fas fa-download"></i></a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% else %}
+                        <p style="color: #5a6a7e; font-size: 0.9rem;" class="mb-0">No documents uploaded.</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- DECLARATIONS STATUS (on-screen only) -->
+                {% if application.student_declaration_accepted %}
+                <div class="detail-section no-print">
+                    <div class="detail-section-header">
+                        <h5><i class="fas fa-file-signature sec-icon"></i> Declarations</h5>
+                    </div>
+                    <div class="detail-section-body">
+                        <div class="row dl">
+                            <div class="col-sm-6">
+                                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                    <i class="fas fa-check-circle" style="color: #1a8754;"></i>
+                                    <span style="font-weight: 600; color: #1a8754; font-size: 0.88rem;">Student's Declaration Accepted</span>
                                 </div>
-                                <div>
-                                    {% if user.can_review_applications %}
-                                        <a href="{% url 'bursary:document_download' application.pk doc.pk %}" 
-                                           class="btn btn-sm btn-outline-primary">
-                                            <i class="fas fa-download"></i> Download
-                                        </a>
+                            </div>
+                            <div class="col-sm-6">
+                                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                    <i class="fas fa-check-circle" style="color: #1a8754;"></i>
+                                    <span style="font-weight: 600; color: #1a8754; font-size: 0.88rem;">Parent/Guardian Declaration Accepted</span>
+                                </div>
+                            </div>
+                            <div class="col-sm-12">
+                                <small style="color: #5a6a7e;">Accepted on {{ application.declaration_accepted_at|date:"d M Y, g:i A" }} by {{ application.applicant.get_full_name }}</small>
+                            </div>
+                            {% if application.student_signature or application.guardian_signature %}
+                            <div class="col-sm-12 mt-2">
+                                <div class="dl-label">Signatures</div>
+                                <div class="d-flex gap-4 mt-1">
+                                    {% if application.student_signature %}
+                                    <div>
+                                        <small style="color: #5a6a7e; display: block; margin-bottom: 0.2rem;">Student</small>
+                                        <img src="{{ application.student_signature.url }}" style="max-height: 60px; border: 1px solid #e2e6ec; border-radius: 4px; padding: 4px; background: #fff;">
+                                    </div>
+                                    {% endif %}
+                                    {% if application.guardian_signature %}
+                                    <div>
+                                        <small style="color: #5a6a7e; display: block; margin-bottom: 0.2rem;">Parent/Guardian</small>
+                                        <img src="{{ application.guardian_signature.url }}" style="max-height: 60px; border: 1px solid #e2e6ec; border-radius: 4px; padding: 4px; background: #fff;">
+                                    </div>
                                     {% endif %}
                                 </div>
                             </div>
-                            {% endfor %}
+                            {% endif %}
                         </div>
-                    {% else %}
-                        <p class="text-muted mb-0">No documents uploaded yet.</p>
+                    </div>
+                </div>
+                {% endif %}
+
+            </div><!-- /detail-wrapper -->
+
+            <!-- ====== PRINT: Declarations ====== -->
+            <div class="print-declarations" style="margin-top: 1rem;">
+                <div style="border: 1px solid #ccc; padding: 0.75rem; margin-bottom: 0.75rem; page-break-inside: avoid;">
+                    <h6 style="font-weight: 700; font-size: 10pt; margin-bottom: 0.3rem;">PART C (1): STUDENT'S DECLARATION</h6>
+                    <p style="font-size: 8.5pt; margin-bottom: 0.5rem;">I declare that I have read this form / this form has been read to me and I hereby confirm that the information given herein is true to the best of my knowledge and belief. I understand that any false information provided shall lead to my automatic disqualification by the committee.</p>
+                    {% if application.student_declaration_accepted %}
+                    <p style="font-size: 8pt; color: #1a8754; margin-bottom: 0.3rem;"><strong>&#10003; Accepted digitally on {{ application.declaration_accepted_at|date:"d/m/Y H:i" }} by {{ application.applicant.get_full_name }}</strong></p>
                     {% endif %}
+                    <div style="display: flex; justify-content: space-between; margin-top: 0.75rem;">
+                        <div style="text-align: center;">
+                            {% if application.student_signature %}
+                            <img src="{{ application.student_signature.url }}" style="max-height: 50px; max-width: 180px; display: block; margin: 0 auto 0.15rem;">
+                            {% else %}
+                            <div style="border-bottom: 1px solid #333; width: 200px; height: 1.5rem;"></div>
+                            {% endif %}
+                            <div style="font-size: 8pt; color: #666;">Student's Signature</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="border-bottom: 1px solid #333; width: 160px; height: 1.5rem;"></div>
+                            <div style="font-size: 8pt; color: #666;">Date</div>
+                        </div>
+                    </div>
+                </div>
+                <div style="border: 1px solid #ccc; padding: 0.75rem; margin-bottom: 0.75rem; page-break-inside: avoid;">
+                    <h6 style="font-weight: 700; font-size: 10pt; margin-bottom: 0.3rem;">PART C (2): PARENT'S / GUARDIAN'S DECLARATION</h6>
+                    <p style="font-size: 8.5pt; margin-bottom: 0.5rem;">I declare that I have read this form / this form has been read to me and I hereby confirm that the information given herein is true to the best of my knowledge and belief. I understand that any false information provided shall lead to disqualification of the student by the committee.</p>
+                    {% if application.guardian_declaration_accepted %}
+                    <p style="font-size: 8pt; color: #1a8754; margin-bottom: 0.3rem;"><strong>&#10003; Accepted digitally on {{ application.declaration_accepted_at|date:"d/m/Y H:i" }} (confirmed by student on behalf)</strong></p>
+                    {% endif %}
+                    <div style="display: flex; justify-content: space-between; margin-top: 0.75rem;">
+                        <div style="text-align: center;">
+                            <div style="border-bottom: 1px solid #333; width: 200px; height: 1.5rem;"></div>
+                            <div style="font-size: 8pt; color: #666;">Parent/Guardian Name</div>
+                        </div>
+                        <div style="text-align: center;">
+                            {% if application.guardian_signature %}
+                            <img src="{{ application.guardian_signature.url }}" style="max-height: 50px; max-width: 140px; display: block; margin: 0 auto 0.15rem;">
+                            {% else %}
+                            <div style="border-bottom: 1px solid #333; width: 140px; height: 1.5rem;"></div>
+                            {% endif %}
+                            <div style="font-size: 8pt; color: #666;">Signature</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="border-bottom: 1px solid #333; width: 120px; height: 1.5rem;"></div>
+                            <div style="font-size: 8pt; color: #666;">Date</div>
+                        </div>
+                    </div>
+                </div>
+                <div style="border: 1px solid #ccc; padding: 0.75rem; page-break-inside: avoid;">
+                    <h6 style="font-weight: 700; font-size: 10pt; margin-bottom: 0.3rem;">PART E: FOR OFFICIAL USE — POLLING STATION VETTING COMMITTEE</h6>
+                    <div style="display: flex; gap: 2rem; font-size: 9pt; margin-bottom: 0.5rem;">
+                        <span>Duly filled and signed: Yes ( ) &nbsp; No ( )</span>
+                        <span>All documents attached: Yes ( ) &nbsp; No ( )</span>
+                    </div>
+                    <div style="font-size: 9pt; margin-bottom: 0.75rem;">
+                        Recommended for Bursary ( ) &nbsp;&nbsp; Not recommended ( ) &nbsp;&nbsp; Reasons: ............................................
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 1rem;">
+                        <div><div style="border-bottom: 1px solid #333; width: 180px; height: 1.2rem;"></div><div style="font-size: 8pt; color: #666;">Chairperson — Name / Date / Sign</div></div>
+                        <div><div style="border-bottom: 1px solid #333; width: 180px; height: 1.2rem;"></div><div style="font-size: 8pt; color: #666;">Secretary — Name / Date / Sign</div></div>
+                    </div>
                 </div>
             </div>
-        </div>
-        
-        <div class="col-md-4">
+
+            <!-- ====== PRINT: Official Use ====== -->
+            <div class="print-signatures" style="margin-top: 0.75rem;">
+                <div style="border: 1px solid #ccc; padding: 0.75rem; page-break-inside: avoid;">
+                    <h6 style="font-weight: 700; font-size: 10pt; margin-bottom: 0.3rem;">PART F: FOR OFFICIAL USE — CONSTITUENCY EDUCATION BURSARY SUB-COMMITTEE</h6>
+                    <div style="font-size: 9pt; margin-bottom: 0.5rem;">
+                        Recommended ( ) &nbsp;&nbsp; Not recommended ( ) &nbsp;&nbsp;&nbsp; Bursary Awarded KES: ........................ &nbsp;&nbsp; Reasons: ............................................
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 1.5rem;">
+                        <div><div style="border-bottom: 1px solid #333; width: 180px; height: 1.2rem;"></div><div style="font-size: 8pt; color: #666;">Secretary's Name / Date / Sign</div></div>
+                        <div style="border: 1px solid #333; width: 120px; height: 60px; text-align: center; font-size: 8pt; color: #999; padding-top: 20px;">OFFICIAL STAMP</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ====== PRINT: Footer ====== -->
+            <div class="print-footer">
+                <p>{{ CONSTITUENCY_NAME|default:"Constituency" }} NG-CDF Bursary System &bull; Ref: {{ application.application_number }} &bull; Printed {% now "d M Y" %} &bull; Computer-generated document</p>
+            </div>
+
+        </div><!-- /col-md-8 -->
+
+        <!-- ====== SIDEBAR (Screen Only) ====== -->
+        <div class="col-md-4 screen-sidebar">
             <!-- Status Timeline -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="fas fa-history"></i> Status History</h5>
+            <div class="card mb-4" style="border-radius: 12px;">
+                <div class="card-header" style="background: #f7f8fa; border-bottom: 1px solid #e2e6ec; border-radius: 12px 12px 0 0;">
+                    <h5 class="mb-0" style="font-family: 'DM Serif Display', Georgia, serif; color: #0f2b46; font-size: 1rem;">
+                        <i class="fas fa-history" style="color: #c9a84c;"></i> Status History
+                    </h5>
                 </div>
                 <div class="card-body">
                     <div class="timeline">
                         {% for log in status_logs %}
                         <div class="timeline-item">
-                            <h6 class="mb-1">{{ log.get_new_status_display }}</h6>
-                            <p class="text-muted small mb-0">
-                                {{ log.created_at|date:"d M Y, g:i A" }}
-                                {% if log.changed_by %}
-                                    <br>By: {{ log.changed_by.get_full_name }}
-                                {% endif %}
-                            </p>
-                            {% if log.comment %}
-                                <p class="small mb-0 mt-1">{{ log.comment }}</p>
-                            {% endif %}
+                            <h6 class="mb-1" style="color: #0f2b46; font-size: 0.88rem;">{{ log.get_new_status_display }}</h6>
+                            <p style="color: #5a6a7e; font-size: 0.8rem;" class="mb-0">{{ log.created_at|date:"d M Y, g:i A" }}{% if log.changed_by %}<br>By: {{ log.changed_by.get_full_name }}{% endif %}</p>
+                            {% if log.comment %}<p style="font-size: 0.8rem;" class="mb-0 mt-1">{{ log.comment }}</p>{% endif %}
                         </div>
                         {% endfor %}
                     </div>
                 </div>
             </div>
-            
+
             <!-- Important Dates -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="fas fa-calendar"></i> Important Dates</h5>
+            <div class="card mb-4" style="border-radius: 12px;">
+                <div class="card-header" style="background: #f7f8fa; border-bottom: 1px solid #e2e6ec; border-radius: 12px 12px 0 0;">
+                    <h5 class="mb-0" style="font-family: 'DM Serif Display', Georgia, serif; color: #0f2b46; font-size: 1rem;"><i class="fas fa-calendar" style="color: #c9a84c;"></i> Dates</h5>
                 </div>
                 <div class="card-body">
-                    <ul class="list-unstyled mb-0">
-                        <li class="mb-2">
-                            <small class="text-muted">Created</small><br>
-                            <strong>{{ application.created_at|date:"d M Y, g:i A" }}</strong>
-                        </li>
-                        {% if application.submitted_at %}
-                        <li class="mb-2">
-                            <small class="text-muted">Submitted</small><br>
-                            <strong>{{ application.submitted_at|date:"d M Y, g:i A" }}</strong>
-                        </li>
-                        {% endif %}
-                        {% if application.reviewed_at %}
-                        <li class="mb-2">
-                            <small class="text-muted">Reviewed</small><br>
-                            <strong>{{ application.reviewed_at|date:"d M Y, g:i A" }}</strong>
-                        </li>
-                        {% endif %}
-                        {% if application.approved_at %}
-                        <li class="mb-2">
-                            <small class="text-muted">Approved</small><br>
-                            <strong>{{ application.approved_at|date:"d M Y, g:i A" }}</strong>
-                        </li>
-                        {% endif %}
+                    <ul class="list-unstyled mb-0" style="font-size: 0.88rem;">
+                        <li class="mb-2"><small style="color: #5a6a7e;">Created</small><br><strong>{{ application.created_at|date:"d M Y, g:i A" }}</strong></li>
+                        {% if application.submitted_at %}<li class="mb-2"><small style="color: #5a6a7e;">Submitted</small><br><strong>{{ application.submitted_at|date:"d M Y, g:i A" }}</strong></li>{% endif %}
+                        {% if application.reviewed_at %}<li class="mb-2"><small style="color: #5a6a7e;">Reviewed</small><br><strong>{{ application.reviewed_at|date:"d M Y, g:i A" }}</strong></li>{% endif %}
+                        {% if application.approved_at %}<li class="mb-2"><small style="color: #5a6a7e;">Approved</small><br><strong>{{ application.approved_at|date:"d M Y, g:i A" }}</strong></li>{% endif %}
                     </ul>
                 </div>
             </div>
-            
+
             {% if user.can_review_applications %}
-            <!-- Admin Information -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="fas fa-shield-alt"></i> Admin Information</h5>
+            <div class="card mb-4" style="border-radius: 12px;">
+                <div class="card-header" style="background: #f7f8fa; border-bottom: 1px solid #e2e6ec; border-radius: 12px 12px 0 0;">
+                    <h5 class="mb-0" style="font-family: 'DM Serif Display', Georgia, serif; color: #0f2b46; font-size: 1rem;"><i class="fas fa-shield-alt" style="color: #c9a84c;"></i> Admin</h5>
                 </div>
                 <div class="card-body">
-                    <p class="mb-2">
-                        <small class="text-muted">Bursary Score</small><br>
-                        <strong class="h4">{{ bursary_score }}/100</strong>
-                    </p>
-                    {% if application.reviewer_comments %}
-                    <p class="mb-2">
-                        <small class="text-muted">Reviewer Comments</small><br>
-                        {{ application.reviewer_comments }}
-                    </p>
-                    {% endif %}
-                    {% if application.rejection_reason %}
-                    <p class="mb-0">
-                        <small class="text-muted">Rejection Reason</small><br>
-                        <span class="text-danger">{{ application.rejection_reason }}</span>
-                    </p>
-                    {% endif %}
+                    <div class="dl-label">Bursary Score</div>
+                    <div class="dl-value" style="font-family: 'DM Serif Display', Georgia, serif; font-size: 1.5rem; color: #0f2b46;">{{ bursary_score }}/100</div>
+                    {% if application.reviewer_comments %}<div class="dl-label mt-2">Comments</div><div class="dl-value" style="font-size: 0.88rem;">{{ application.reviewer_comments }}</div>{% endif %}
+                    {% if application.rejection_reason %}<div class="dl-label mt-2">Rejection Reason</div><div class="dl-value" style="color: #c0392b; font-size: 0.88rem;">{{ application.rejection_reason }}</div>{% endif %}
                 </div>
             </div>
             {% endif %}
-            
+
             <!-- Actions -->
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="fas fa-cogs"></i> Actions</h5>
+            <div class="card actions-card" style="border-radius: 12px;">
+                <div class="card-header" style="background: #f7f8fa; border-bottom: 1px solid #e2e6ec; border-radius: 12px 12px 0 0;">
+                    <h5 class="mb-0" style="font-family: 'DM Serif Display', Georgia, serif; color: #0f2b46; font-size: 1rem;"><i class="fas fa-cogs" style="color: #c9a84c;"></i> Actions</h5>
                 </div>
                 <div class="card-body">
                     {% if application.status == 'draft' and application.applicant == user %}
-                        <form method="post" action="{% url 'bursary:application_submit' application.pk %}" class="mb-2">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-success btn-block w-100">
-                                <i class="fas fa-paper-plane"></i> Submit Application
-                            </button>
-                        </form>
-                        <a href="{% url 'bursary:application_delete' application.pk %}" 
-                           class="btn btn-danger btn-block w-100 delete-confirm">
-                            <i class="fas fa-trash"></i> Delete Application
-                        </a>
+                    <a href="{% url 'bursary:document_upload' application.pk %}" class="btn btn-success w-100 mb-2"><i class="fas fa-paper-plane"></i> Review &amp; Submit</a>
+                    <a href="{% url 'bursary:application_delete' application.pk %}" class="btn w-100" style="background: rgba(192,57,43,0.08); color: #c0392b; border: 1px solid rgba(192,57,43,0.15);"><i class="fas fa-trash"></i> Delete</a>
                     {% endif %}
-                    
                     {% if application.status != 'draft' %}
-                        <a href="{% url 'bursary:application_status' application.pk %}" 
-                           class="btn btn-info btn-block w-100">
-                            <i class="fas fa-search"></i> Track Status
-                        </a>
+                    <a href="{% url 'bursary:application_status' application.pk %}" class="btn w-100" style="background: rgba(41,128,185,0.08); color: #2980b9; border: 1px solid rgba(41,128,185,0.15);"><i class="fas fa-search"></i> Track Status</a>
                     {% endif %}
                 </div>
             </div>
-        </div>
-    </div>
+        </div><!-- /sidebar -->
+    </div><!-- /row -->
 </div>
 {% endblock %}

@@ -297,17 +297,7 @@ Constituency Bursary System
         from_email = settings.DEFAULT_FROM_EMAIL or 'noreply@example.com'
         to_email = user.email
         
-        # For development without email configured
-        if settings.DEBUG and not hasattr(settings, 'EMAIL_HOST_USER'):
-            print(f"\n{'='*50}")
-            print(f"VERIFICATION EMAIL (Debug Mode)")
-            print(f"To: {to_email}")
-            print(f"Subject: {subject}")
-            print(f"Verification URL: {verification_url}")
-            print(f"{'='*50}\n")
-            return True
-        
-        # Send actual email
+        # Send email (console backend in DEBUG will print to terminal)
         try:
             if html_content:
                 email = EmailMultiAlternatives(
@@ -317,6 +307,7 @@ Constituency Bursary System
                     to=[to_email]
                 )
                 email.attach_alternative(html_content, "text/html")
+                email.send(fail_silently=False)
             else:
                 # Send plain text email
                 from django.core.mail import send_mail
@@ -408,81 +399,112 @@ Constituency Bursary System
 
 def calculate_bursary_score(application):
     """
-    Calculate a score for the bursary application based on various criteria.
+    Calculate a bursary priority score out of 100.
     Higher score = higher priority for funding.
-    
-    Scoring criteria (example):
-    - Family income (lower income = higher score)
-    - Academic performance
-    - Special circumstances (orphan, disability, etc.)
-    - Previous funding received
+
+    Scoring breakdown (100 points total):
+    - Financial need (family income):     40 points
+    - Family circumstances:               25 points
+    - Academic performance:               15 points
+    - Fee burden & funding gap:           10 points
+    - Previous funding:                   10 points
     """
     score = 0
-    
+
     try:
-        # Family income scoring (inverse relationship)
-        # Lower income gets higher score
-        family_income = getattr(application, 'family_income', 0)
-        if family_income == 0:
-            score += 100  # No income
-        elif family_income < 10000:
-            score += 80
-        elif family_income < 20000:
-            score += 60
-        elif family_income < 30000:
-            score += 40
-        elif family_income < 50000:
-            score += 20
+        # === 1. FINANCIAL NEED (40 points) ===
+        # Based on family_monthly_income — lower income = higher score
+        income = getattr(application, 'family_monthly_income', None)
+        if income is not None:
+            income = float(income)
+            if income <= 0:
+                score += 40
+            elif income < 5000:
+                score += 35
+            elif income < 10000:
+                score += 30
+            elif income < 20000:
+                score += 20
+            elif income < 30000:
+                score += 12
+            elif income < 50000:
+                score += 6
+            else:
+                score += 2
         else:
-            score += 10
-        
-        # Academic performance scoring
-        # Assuming grades are stored as a percentage or GPA
-        academic_score = getattr(application, 'academic_score', 0)
-        if academic_score >= 80:
-            score += 50  # Excellent
-        elif academic_score >= 70:
-            score += 40  # Good
-        elif academic_score >= 60:
-            score += 30  # Average
-        elif academic_score >= 50:
-            score += 20  # Below average
-        else:
-            score += 10
-        
-        # Special circumstances
+            score += 20  # Unknown income — neutral middle score
+
+        # === 2. FAMILY CIRCUMSTANCES (25 points) ===
+        family_status = getattr(application, 'family_status', '')
+
+        if family_status == 'both_dead':
+            score += 12
+        elif family_status == 'one_dead':
+            score += 8
+        elif family_status == 'single_parent':
+            score += 6
+
         if getattr(application, 'is_orphan', False):
-            score += 30
-        
-        if getattr(application, 'has_disability', False):
-            score += 25
-        
-        if getattr(application, 'is_single_parent_family', False):
-            score += 20
-        
-        # Year of study (higher years might get priority)
-        year_of_study = getattr(application, 'year_of_study', 1)
-        score += year_of_study * 5
-        
-        # Previous funding (those who haven't received before get priority)
-        if not getattr(application, 'received_bursary_before', False):
-            score += 15
-        
-        # Amount requested vs amount available
-        # Smaller requests might be easier to fulfill
-        amount_requested = getattr(application, 'amount_requested', 0)
-        if amount_requested < 20000:
-            score += 10
-        elif amount_requested < 30000:
             score += 5
-        
-        if settings.DEBUG:
-            print(f"Calculated score for application {getattr(application, 'reference_number', 'N/A')}: {score}")
-        
+        if getattr(application, 'has_disability', False):
+            score += 4
+        if getattr(application, 'is_single_parent', False):
+            score += 2
+        if getattr(application, 'has_chronic_illness', False):
+            score += 1
+        if getattr(application, 'parent_has_disability', False):
+            score += 1
+
+        # === 3. ACADEMIC PERFORMANCE (15 points) ===
+        perf = getattr(application, 'academic_performance', '')
+        perf_scores = {
+            'excellent': 15,
+            'very_good': 12,
+            'good': 9,
+            'fair': 5,
+            'poor': 2,
+        }
+        score += perf_scores.get(perf, 0)
+
+        # === 4. FEE BURDEN & FUNDING GAP (10 points) ===
+        total_fees = float(getattr(application, 'total_fees', 0) or 0)
+        amount_requested = float(getattr(application, 'amount_requested', 0) or 0)
+        other_support = float(getattr(application, 'other_support', 0) or 0)
+
+        if total_fees > 0:
+            # What percentage of fees is unfunded?
+            gap_ratio = (total_fees - other_support) / total_fees
+            if gap_ratio >= 0.9:
+                score += 10
+            elif gap_ratio >= 0.7:
+                score += 7
+            elif gap_ratio >= 0.5:
+                score += 4
+            else:
+                score += 2
+
+        # === 5. PREVIOUS FUNDING (10 points) ===
+        # Students who haven't received CDF or other bursaries before get priority
+        received_cdf = getattr(application, 'previous_cdf_support', False)
+        received_other = getattr(application, 'previous_other_support_received', False)
+
+        if not received_cdf and not received_other:
+            score += 10  # Never received any bursary
+        elif not received_cdf:
+            score += 6   # Received other but not CDF
+        elif not received_other:
+            score += 4   # Received CDF but not other
+        else:
+            score += 1   # Received both — lowest priority
+
+        # Cap at 100
+        score = min(score, 100)
+
         return score
-        
+
     except Exception as e:
-        print(f"Error calculating bursary score: {e}")
+        if settings.DEBUG:
+            print(f"Error calculating bursary score: {e}")
         return 0
 
 

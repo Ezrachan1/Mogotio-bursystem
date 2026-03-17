@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %}Access Denied{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center mt-5">
+        <div class="col-md-6 text-center">
+            <div style="width: 80px; height: 80px; border-radius: 50%; background: rgba(192,57,43,0.08); color: #c0392b; display: inline-flex; align-items: center; justify-content: center; font-size: 2rem; margin-bottom: 1.5rem;">
+                <i class="fas fa-lock"></i>
+            </div>
+            <h2 style="font-family: 'DM Serif Display', Georgia, serif; color: #0f2b46; margin-bottom: 0.5rem;">Access Denied</h2>
+            <p style="color: #5a6a7e; font-size: 0.95rem; margin-bottom: 2rem;">
+                You don't have permission to view this page. This may be because you're not logged in, or because this content is restricted to specific users.
+            </p>
+            <div class="d-flex justify-content-center gap-3">
+                <a href="javascript:history.back()" class="btn" style="background: #5a6a7e; color: #fff; border: none; font-weight: 600; border-radius: 6px;">
+                    <i class="fas fa-arrow-left"></i> Go Back
+                </a>
+                <a href="{% url 'home' %}" class="btn" style="background: linear-gradient(135deg, #0f2b46, #1a3d5c); color: #fff; border: none; font-weight: 600; border-radius: 6px;">
+                    <i class="fas fa-home"></i> Home
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

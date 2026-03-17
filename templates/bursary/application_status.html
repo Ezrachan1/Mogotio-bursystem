@@ -138,12 +138,21 @@
                     
                     <!-- Actions -->
                     <div class="mt-4 text-center">
-                        <a href="{% url 'bursary:application_detail' application.pk %}" class="btn btn-primary">
-                            <i class="fas fa-eye"></i> View Full Application
-                        </a>
-                        <a href="{% url 'bursary:application_list' %}" class="btn btn-secondary">
-                            <i class="fas fa-list"></i> Back to Applications
-                        </a>
+                        {% if user.can_review_applications %}
+                            <a href="{% url 'bursary:admin_application_detail' application.pk %}" class="btn btn-primary">
+                                <i class="fas fa-eye"></i> View Full Application
+                            </a>
+                            <a href="{% url 'bursary:admin_application_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-list"></i> Back to Applications
+                            </a>
+                        {% else %}
+                            <a href="{% url 'bursary:application_detail' application.pk %}" class="btn btn-primary">
+                                <i class="fas fa-eye"></i> View Full Application
+                            </a>
+                            <a href="{% url 'bursary:application_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-list"></i> Back to Applications
+                            </a>
+                        {% endif %}
                     </div>
                 </div>
             </div>

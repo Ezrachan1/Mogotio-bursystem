@@ -37,5 +37,6 @@ if settings.DEBUG:
     ] + urlpatterns
 
 # Custom error pages
+handler403 = 'constituency_bursary.views.custom_403'
 handler404 = 'constituency_bursary.views.custom_404'
 handler500 = 'constituency_bursary.views.custom_500'

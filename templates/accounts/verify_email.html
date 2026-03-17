@@ -1,55 +1,77 @@
 {% extends 'base.html' %}
-{% load crispy_forms_tags %}
 
-{% block title %}Email Verification{% endblock %}
+{% block title %}Verify Your Email{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow">
-                <div class="card-header bg-primary text-white">
-                    <h3 class="mb-0">Email Verification</h3>
-                </div>
-                <div class="card-body">
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i>
-                        We've sent a verification code to your email address: 
-                        <strong>{{ user.email }}</strong>
+<div class="container">
+    <div class="row justify-content-center mt-5">
+        <div class="col-md-6 col-lg-5">
+            <div class="card" style="border: none; border-radius: 16px; box-shadow: 0 8px 30px rgba(15,43,70,0.12); overflow: hidden;">
+                <div class="card-body text-center" style="padding: 3rem 2rem;">
+
+                    <!-- Envelope icon -->
+                    <div style="width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, #0f2b46, #1a3d5c); color: #c9a84c; display: inline-flex; align-items: center; justify-content: center; font-size: 2rem; margin-bottom: 1.5rem; box-shadow: 0 4px 16px rgba(15,43,70,0.2);">
+                        <i class="fas fa-envelope-open-text"></i>
                     </div>
-                    
-                    <p class="text-muted">
-                        Please check your email and enter the 6-digit verification code below.
-                        The code will expire in 10 minutes.
+
+                    <h2 style="font-family: 'DM Serif Display', Georgia, serif; color: #0f2b46; margin-bottom: 0.5rem;">Check Your Email</h2>
+
+                    <p style="color: #5a6a7e; font-size: 0.95rem; margin-bottom: 0.25rem;">
+                        We've sent a verification link to:
                     </p>
-                    
-                    <form method="post" id="verification-form">
-                        {% csrf_token %}
-                        {{ form|crispy }}
-                        
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-check"></i> Verify Email
-                            </button>
-                        </div>
-                    </form>
-                    
-                    <hr class="my-4">
-                    
-                    <div class="text-center">
-                        <p class="mb-2">Didn't receive the code?</p>
-                        <button type="button" class="btn btn-outline-secondary btn-sm" id="resend-code">
-                            <i class="fas fa-redo"></i> Resend Code
-                        </button>
+                    <p style="color: #0f2b46; font-weight: 700; font-size: 1.05rem; margin-bottom: 1.5rem;">
+                        {{ user.email }}
+                    </p>
+
+                    <div style="background: rgba(41,128,185,0.08); border-left: 4px solid #2980b9; border-radius: 10px; padding: 1rem 1.25rem; text-align: left; margin-bottom: 1.5rem;">
+                        <p style="color: #3a4a5c; font-size: 0.9rem; margin-bottom: 0;">
+                            <i class="fas fa-info-circle" style="color: #2980b9; margin-right: 0.3rem;"></i>
+                            Click the link in the email to verify your account. The link will expire in 24 hours.
+                        </p>
                     </div>
-                    
-                    <div class="mt-3 text-center">
-                        <small class="text-muted">
-                            <i class="fas fa-shield-alt"></i> 
-                            Check your spam folder if you don't see the email in your inbox.
+
+                    {% if debug_verify_url %}
+                    <div style="background: rgba(26,135,84,0.08); border-left: 4px solid #1a8754; border-radius: 10px; padding: 1rem 1.25rem; text-align: left; margin-bottom: 1.5rem;">
+                        <p style="color: #3a4a5c; font-size: 0.85rem; margin-bottom: 0.5rem;">
+                            <i class="fas fa-code" style="color: #1a8754; margin-right: 0.3rem;"></i>
+                            <strong>Dev mode — click to verify:</strong>
+                        </p>
+                        <a href="{{ debug_verify_url }}" style="color: #0f2b46; font-weight: 600; word-break: break-all; font-size: 0.82rem;">
+                            {{ debug_verify_url }}
+                        </a>
+                    </div>
+                    {% elif DEBUG %}
+                    <div style="background: rgba(212,146,11,0.08); border-left: 4px solid #d4920b; border-radius: 10px; padding: 1rem 1.25rem; text-align: left; margin-bottom: 1.5rem;">
+                        <p style="color: #3a4a5c; font-size: 0.85rem; margin-bottom: 0;">
+                            <i class="fas fa-terminal" style="color: #d4920b; margin-right: 0.3rem;"></i>
+                            <strong>Dev mode:</strong> Check the terminal running <code>runserver</code> for the verification link.
+                        </p>
+                    </div>
+                    {% endif %}
+
+                    <hr style="border-color: #eef1f5; margin: 1.5rem 0;">
+
+                    <p style="color: #5a6a7e; font-size: 0.88rem; margin-bottom: 0.75rem;">Didn't receive the email?</p>
+
+                    <button type="button" class="btn" id="resendBtn" style="background: transparent; border: 1.5px solid #0f2b46; color: #0f2b46; font-weight: 600; padding: 0.5rem 1.5rem; border-radius: 6px;">
+                        <i class="fas fa-redo"></i> Resend Email
+                    </button>
+
+                    <div id="resendMsg" style="margin-top: 0.75rem; font-size: 0.85rem; display: none;"></div>
+
+                    <div style="margin-top: 1.5rem;">
+                        <small style="color: #5a6a7e;">
+                            <i class="fas fa-shield-alt" style="color: #c9a84c;"></i>
+                            Check your spam/junk folder if you don't see it in your inbox.
                         </small>
                     </div>
                 </div>
+            </div>
+
+            <div class="text-center mt-3">
+                <a href="{% url 'bursary:dashboard' %}" style="color: #5a6a7e; font-size: 0.88rem; text-decoration: none;">
+                    <i class="fas fa-arrow-left"></i> Skip for now — go to Dashboard
+                </a>
             </div>
         </div>
     </div>
@@ -57,15 +79,13 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const resendButton = document.getElementById('resend-code');
-    let cooldownTimer = null;
-    
-    resendButton.addEventListener('click', function() {
-        // Disable button
-        resendButton.disabled = true;
-        resendButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
-        
-        // Send AJAX request
+    const btn = document.getElementById('resendBtn');
+    const msg = document.getElementById('resendMsg');
+
+    btn.addEventListener('click', function() {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+
         fetch("{% url 'accounts:resend_code' %}", {
             method: 'POST',
             headers: {
@@ -75,55 +95,38 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())
         .then(data => {
+            msg.style.display = 'block';
             if (data.status === 'success') {
-                // Show success message
-                showAlert('success', data.message);
-                
-                // Start cooldown timer (2 minutes)
-                let seconds = 120;
-                resendButton.innerHTML = `Wait ${seconds}s`;
-                
-                cooldownTimer = setInterval(function() {
-                    seconds--;
-                    if (seconds > 0) {
-                        resendButton.innerHTML = `Wait ${seconds}s`;
+                msg.style.color = '#1a8754';
+                msg.innerHTML = '<i class="fas fa-check-circle"></i> ' + data.message;
+                // Cooldown 60s
+                let sec = 60;
+                btn.innerHTML = 'Wait ' + sec + 's';
+                const timer = setInterval(function() {
+                    sec--;
+                    if (sec > 0) {
+                        btn.innerHTML = 'Wait ' + sec + 's';
                     } else {
-                        clearInterval(cooldownTimer);
-                        resendButton.disabled = false;
-                        resendButton.innerHTML = '<i class="fas fa-redo"></i> Resend Code';
+                        clearInterval(timer);
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fas fa-redo"></i> Resend Email';
                     }
                 }, 1000);
             } else {
-                // Show error message
-                showAlert('danger', data.message);
-                resendButton.disabled = false;
-                resendButton.innerHTML = '<i class="fas fa-redo"></i> Resend Code';
+                msg.style.color = '#c0392b';
+                msg.innerHTML = '<i class="fas fa-exclamation-circle"></i> ' + data.message;
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-redo"></i> Resend Email';
             }
         })
-        .catch(error => {
-            console.error('Error:', error);
-            showAlert('danger', 'An error occurred. Please try again.');
-            resendButton.disabled = false;
-            resendButton.innerHTML = '<i class="fas fa-redo"></i> Resend Code';
+        .catch(function() {
+            msg.style.display = 'block';
+            msg.style.color = '#c0392b';
+            msg.innerHTML = '<i class="fas fa-exclamation-circle"></i> An error occurred. Please try again.';
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-redo"></i> Resend Email';
         });
     });
-    
-    function showAlert(type, message) {
-        const alertDiv = document.createElement('div');
-        alertDiv.className = `alert alert-${type} alert-dismissible fade show mt-3`;
-        alertDiv.innerHTML = `
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        `;
-        
-        const form = document.getElementById('verification-form');
-        form.parentNode.insertBefore(alertDiv, form.nextSibling);
-        
-        // Auto-dismiss after 5 seconds
-        setTimeout(() => {
-            alertDiv.remove();
-        }, 5000);
-    }
 });
 </script>
 {% endblock %}

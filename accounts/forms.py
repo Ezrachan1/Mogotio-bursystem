@@ -55,14 +55,37 @@ class CustomAuthenticationForm(AuthenticationForm):
 
 class UserRegistrationForm(UserCreationForm):
     """
-    Registration form for new users
+    Registration form for new users with cascading location dropdowns
     """
+    # Mogotio Constituency location data
+    WARD_CHOICES = [
+        ('', 'Select Ward'),
+        ('Mogotio', 'Mogotio'),
+        ('Emining', 'Emining'),
+        ('Kisanana', 'Kisanana'),
+    ]
+
+    GENDER_CHOICES = [
+        ('', 'Select Gender'),
+        ('M', 'Male'),
+        ('F', 'Female'),
+        ('O', 'Other'),
+    ]
+
+    gender = forms.ChoiceField(
+        choices=GENDER_CHOICES,
+        required=True,
+        widget=forms.Select(attrs={
+            'class': 'form-select',
+        })
+    )
+
     first_name = forms.CharField(
         max_length=30,
         required=True,
         widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': 'Enter first name'
+            'placeholder': 'First name'
         })
     )
     last_name = forms.CharField(
@@ -70,14 +93,14 @@ class UserRegistrationForm(UserCreationForm):
         required=True,
         widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': 'Enter last name'
+            'placeholder': 'Last name'
         })
     )
     email = forms.EmailField(
         required=True,
         widget=forms.EmailInput(attrs={
             'class': 'form-control',
-            'placeholder': 'Enter email address'
+            'placeholder': 'you@example.com'
         })
     )
     phone_number = PhoneNumberField(
@@ -93,7 +116,7 @@ class UserRegistrationForm(UserCreationForm):
         required=True,
         widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': 'Enter ID/Passport number'
+            'placeholder': 'e.g. 12345678'
         }),
         help_text=_('Kenya National ID or Passport number')
     )
@@ -104,47 +127,47 @@ class UserRegistrationForm(UserCreationForm):
             'type': 'date'
         })
     )
-    
-    # Address fields
-    ward = forms.CharField(
-        max_length=100,
+
+    # Location fields as dropdowns
+    ward = forms.ChoiceField(
+        choices=WARD_CHOICES,
         required=True,
-        widget=forms.TextInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'Enter ward'
+        widget=forms.Select(attrs={
+            'class': 'form-select',
+            'id': 'id_ward',
         })
     )
     location = forms.CharField(
         max_length=100,
         required=False,
-        widget=forms.TextInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'Enter location'
+        widget=forms.Select(attrs={
+            'class': 'form-select',
+            'id': 'id_location',
         })
     )
     sub_location = forms.CharField(
         max_length=100,
         required=False,
-        widget=forms.TextInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'Enter sub-location'
+        widget=forms.Select(attrs={
+            'class': 'form-select',
+            'id': 'id_sub_location',
         })
     )
     village = forms.CharField(
         max_length=100,
         required=False,
-        widget=forms.TextInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'Enter village'
+        widget=forms.Select(attrs={
+            'class': 'form-select',
+            'id': 'id_village',
         })
     )
-    
+
     class Meta:
         model = User
         fields = [
-            'username', 'first_name', 'last_name', 'email', 
+            'username', 'first_name', 'last_name', 'email',
             'phone_number', 'id_number', 'date_of_birth',
-            'password1', 'password2', 'ward', 'location', 
+            'password1', 'password2', 'ward', 'location',
             'sub_location', 'village'
         ]
         widgets = {
@@ -153,68 +176,46 @@ class UserRegistrationForm(UserCreationForm):
                 'placeholder': 'Choose a username'
             }),
         }
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # Customize password fields
+        self.fields['password1'].widget = forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Create a strong password',
+            'id': 'id_password1',
+        })
+        self.fields['password2'].widget = forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Repeat password',
+        })
+        # Remove default crispy submit — we use a custom template
         self.helper = FormHelper()
-        self.helper.form_method = 'post'
-        self.helper.layout = Layout(
-            HTML('<h4 class="mb-3">Personal Information</h4>'),
-            Row(
-                Column('first_name', css_class='col-md-6'),
-                Column('last_name', css_class='col-md-6'),
-                css_class='mb-3'
-            ),
-            Row(
-                Column('username', css_class='col-md-6'),
-                Column('email', css_class='col-md-6'),
-                css_class='mb-3'
-            ),
-            Row(
-                Column('phone_number', css_class='col-md-6'),
-                Column('id_number', css_class='col-md-6'),
-                css_class='mb-3'
-            ),
-            Field('date_of_birth', css_class='mb-3'),
-            
-            HTML('<h4 class="mb-3 mt-4">Location Information</h4>'),
-            Row(
-                Column('ward', css_class='col-md-6'),
-                Column('location', css_class='col-md-6'),
-                css_class='mb-3'
-            ),
-            Row(
-                Column('sub_location', css_class='col-md-6'),
-                Column('village', css_class='col-md-6'),
-                css_class='mb-3'
-            ),
-            
-            HTML('<h4 class="mb-3 mt-4">Security Information</h4>'),
-            Field('password1', css_class='mb-3'),
-            Field('password2', css_class='mb-3'),
-            
-            Submit('submit', 'Register', css_class='btn btn-primary btn-lg btn-block')
-        )
-    
+        self.helper.form_tag = False
+        self.helper.disable_csrf = True
+
     def clean_id_number(self):
         id_number = self.cleaned_data.get('id_number')
-        # Basic validation for Kenyan ID (8 digits) or passport
         if id_number.isdigit() and len(id_number) != 8:
             raise ValidationError(_('Kenya National ID must be 8 digits'))
         return id_number
-    
+
     def clean_email(self):
         email = self.cleaned_data.get('email')
         if User.objects.filter(email=email).exists():
             raise ValidationError(_('This email is already registered'))
         return email
-    
+
     def save(self, commit=True):
         user = super().save(commit=False)
         if commit:
             user.save()
-            # Create user profile
-            UserProfile.objects.create(user=user)
+            # Note: UserProfile is created automatically via post_save signal
+            # Save gender to the profile
+            gender = self.cleaned_data.get('gender')
+            if gender and hasattr(user, 'profile'):
+                user.profile.gender = gender
+                user.profile.save()
         return user
 
 

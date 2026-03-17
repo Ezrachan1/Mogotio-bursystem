@@ -1,52 +1,191 @@
 {% extends 'base.html' %}
-{% load crispy_forms_tags %}
 
 {% block title %}Register - {{ block.super }}{% endblock %}
 
 {% block content %}
 <div class="container">
-    <div class="row justify-content-center mt-4">
-        <div class="col-md-8">
-            <div class="card shadow">
-                <div class="card-body p-4">
-                    <h2 class="text-center mb-4">Create Your Account</h2>
-                    <p class="text-center text-muted mb-4">
-                        Register to apply for constituency bursary funds
-                    </p>
-                    
-                    <!-- Progress indicator -->
-                    <div class="progress mb-4" style="height: 5px;">
-                        <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+    <div class="row justify-content-center mt-4 mb-5">
+        <div class="col-md-9 col-lg-8">
+            <div class="card auth-card" style="border: none; border-radius: 16px; box-shadow: 0 8px 30px rgba(15,43,70,0.12); overflow: hidden;">
+                <div class="card-body" style="padding: 2.5rem;">
+                    <div class="text-center mb-4">
+                        <div style="width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, #0f2b46, #1a3d5c); color: #c9a84c; display: inline-flex; align-items: center; justify-content: center; font-size: 1.4rem; margin-bottom: 0.75rem; box-shadow: 0 4px 12px rgba(15,43,70,0.2);">
+                            <i class="fas fa-user-plus"></i>
+                        </div>
+                        <h2 style="font-family: 'DM Serif Display', Georgia, serif; color: #0f2b46; margin-bottom: 0.3rem;">Create Your Account</h2>
+                        <p style="color: #5a6a7e; font-size: 0.92rem;">Register to apply for constituency bursary funds</p>
                     </div>
-                    
-                    <form method="post" class="needs-validation" novalidate data-loading>
+
+                    <!-- Progress Bar -->
+                    <div style="height: 5px; background: #eef1f5; border-radius: 10px; overflow: hidden; margin-bottom: 2rem;">
+                        <div id="formProgress" style="height: 100%; width: 0%; background: linear-gradient(90deg, #0f2b46, #c9a84c); border-radius: 10px; transition: width 0.5s cubic-bezier(0.4,0,0.2,1);"></div>
+                    </div>
+
+                    {% if form.non_field_errors %}
+                        <div class="alert" style="background: rgba(192,57,43,0.08); border-left: 4px solid #c0392b; border-radius: 10px; color: #3a4a5c; padding: 1rem 1.25rem;">
+                            <i class="fas fa-exclamation-circle me-1" style="color: #c0392b;"></i>
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <form method="post" novalidate id="registerForm">
                         {% csrf_token %}
-                        {{ form|crispy }}
-                        
-                        <div class="form-check mb-4">
-                            <input type="checkbox" class="form-check-input" id="terms" required>
-                            <label class="form-check-label" for="terms">
-                                I agree to the <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Terms and Conditions</a>
-                            </label>
-                            <div class="invalid-feedback">
-                                You must agree to the terms before registering.
+
+                        <!-- Section 1: Personal Information -->
+                        <div style="margin-bottom: 2rem;">
+                            <h5 style="font-family: 'DM Serif Display', Georgia, serif; color: #0f2b46; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #eef1f5;">
+                                <i class="fas fa-user" style="color: #c9a84c; margin-right: 0.4rem; font-size: 0.85rem;"></i> Personal Information
+                            </h5>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="{{ form.first_name.id_for_label }}" class="form-label" style="font-weight: 600; font-size: 0.88rem; color: #3a4a5c;">First Name <span style="color: #c0392b;">*</span></label>
+                                    {{ form.first_name }}
+                                    {% if form.first_name.errors %}<div style="color: #c0392b; font-size: 0.82rem; margin-top: 0.25rem;">{{ form.first_name.errors.0 }}</div>{% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="{{ form.last_name.id_for_label }}" class="form-label" style="font-weight: 600; font-size: 0.88rem; color: #3a4a5c;">Last Name <span style="color: #c0392b;">*</span></label>
+                                    {{ form.last_name }}
+                                    {% if form.last_name.errors %}<div style="color: #c0392b; font-size: 0.82rem; margin-top: 0.25rem;">{{ form.last_name.errors.0 }}</div>{% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="{{ form.username.id_for_label }}" class="form-label" style="font-weight: 600; font-size: 0.88rem; color: #3a4a5c;">Username <span style="color: #c0392b;">*</span></label>
+                                    {{ form.username }}
+                                    {% if form.username.errors %}<div style="color: #c0392b; font-size: 0.82rem; margin-top: 0.25rem;">{{ form.username.errors.0 }}</div>{% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="{{ form.email.id_for_label }}" class="form-label" style="font-weight: 600; font-size: 0.88rem; color: #3a4a5c;">Email Address <span style="color: #c0392b;">*</span></label>
+                                    {{ form.email }}
+                                    {% if form.email.errors %}<div style="color: #c0392b; font-size: 0.82rem; margin-top: 0.25rem;">{{ form.email.errors.0 }}</div>{% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="{{ form.phone_number.id_for_label }}" class="form-label" style="font-weight: 600; font-size: 0.88rem; color: #3a4a5c;">Phone Number <span style="color: #c0392b;">*</span></label>
+                                    {{ form.phone_number }}
+                                    <small style="color: #5a6a7e; font-size: 0.78rem;">Format: +254712345678</small>
+                                    {% if form.phone_number.errors %}<div style="color: #c0392b; font-size: 0.82rem; margin-top: 0.25rem;">{{ form.phone_number.errors.0 }}</div>{% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="{{ form.id_number.id_for_label }}" class="form-label" style="font-weight: 600; font-size: 0.88rem; color: #3a4a5c;">ID / Passport No. <span style="color: #c0392b;">*</span></label>
+                                    {{ form.id_number }}
+                                    {% if form.id_number.errors %}<div style="color: #c0392b; font-size: 0.82rem; margin-top: 0.25rem;">{{ form.id_number.errors.0 }}</div>{% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="{{ form.date_of_birth.id_for_label }}" class="form-label" style="font-weight: 600; font-size: 0.88rem; color: #3a4a5c;">Date of Birth <span style="color: #c0392b;">*</span></label>
+                                    {{ form.date_of_birth }}
+                                    {% if form.date_of_birth.errors %}<div style="color: #c0392b; font-size: 0.82rem; margin-top: 0.25rem;">{{ form.date_of_birth.errors.0 }}</div>{% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="{{ form.gender.id_for_label }}" class="form-label" style="font-weight: 600; font-size: 0.88rem; color: #3a4a5c;">Gender <span style="color: #c0392b;">*</span></label>
+                                    {{ form.gender }}
+                                    {% if form.gender.errors %}<div style="color: #c0392b; font-size: 0.82rem; margin-top: 0.25rem;">{{ form.gender.errors.0 }}</div>{% endif %}
+                                </div>
                             </div>
                         </div>
-                        
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary btn-lg">
+
+                        <!-- Section 2: Location Information -->
+                        <div style="margin-bottom: 2rem;">
+                            <h5 style="font-family: 'DM Serif Display', Georgia, serif; color: #0f2b46; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #eef1f5;">
+                                <i class="fas fa-map-marker-alt" style="color: #c9a84c; margin-right: 0.4rem; font-size: 0.85rem;"></i> Location in Mogotio Constituency
+                            </h5>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="id_ward" class="form-label" style="font-weight: 600; font-size: 0.88rem; color: #3a4a5c;">Ward <span style="color: #c0392b;">*</span></label>
+                                    {{ form.ward }}
+                                    {% if form.ward.errors %}<div style="color: #c0392b; font-size: 0.82rem; margin-top: 0.25rem;">{{ form.ward.errors.0 }}</div>{% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="id_location" class="form-label" style="font-weight: 600; font-size: 0.88rem; color: #3a4a5c;">Location</label>
+                                    <select class="form-select" name="location" id="id_location" disabled>
+                                        <option value="">Select Ward first</option>
+                                    </select>
+                                    {% if form.location.errors %}<div style="color: #c0392b; font-size: 0.82rem; margin-top: 0.25rem;">{{ form.location.errors.0 }}</div>{% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="id_sub_location" class="form-label" style="font-weight: 600; font-size: 0.88rem; color: #3a4a5c;">Sub-Location</label>
+                                    <select class="form-select" name="sub_location" id="id_sub_location" disabled>
+                                        <option value="">Select Location first</option>
+                                    </select>
+                                    {% if form.sub_location.errors %}<div style="color: #c0392b; font-size: 0.82rem; margin-top: 0.25rem;">{{ form.sub_location.errors.0 }}</div>{% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="id_village" class="form-label" style="font-weight: 600; font-size: 0.88rem; color: #3a4a5c;">Village</label>
+                                    <select class="form-select" name="village" id="id_village" disabled>
+                                        <option value="">Select Sub-Location first</option>
+                                    </select>
+                                    {% if form.village.errors %}<div style="color: #c0392b; font-size: 0.82rem; margin-top: 0.25rem;">{{ form.village.errors.0 }}</div>{% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Section 3: Security -->
+                        <div style="margin-bottom: 2rem;">
+                            <h5 style="font-family: 'DM Serif Display', Georgia, serif; color: #0f2b46; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #eef1f5;">
+                                <i class="fas fa-shield-alt" style="color: #c9a84c; margin-right: 0.4rem; font-size: 0.85rem;"></i> Security
+                            </h5>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="id_password1" class="form-label" style="font-weight: 600; font-size: 0.88rem; color: #3a4a5c;">Password <span style="color: #c0392b;">*</span></label>
+                                    <div class="input-group">
+                                        {{ form.password1 }}
+                                        <button class="btn" type="button" onclick="togglePassword('id_password1', this)" style="border: 1.5px solid #e2e6ec; border-left: none; color: #5a6a7e;">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                    <!-- Password Strength Meter -->
+                                    <div style="margin-top: 0.5rem;">
+                                        <div style="display: flex; gap: 4px; margin-bottom: 0.3rem;">
+                                            <div id="str-1" style="flex: 1; height: 4px; border-radius: 2px; background: #e2e6ec; transition: background 0.3s;"></div>
+                                            <div id="str-2" style="flex: 1; height: 4px; border-radius: 2px; background: #e2e6ec; transition: background 0.3s;"></div>
+                                            <div id="str-3" style="flex: 1; height: 4px; border-radius: 2px; background: #e2e6ec; transition: background 0.3s;"></div>
+                                            <div id="str-4" style="flex: 1; height: 4px; border-radius: 2px; background: #e2e6ec; transition: background 0.3s;"></div>
+                                        </div>
+                                        <small id="strengthText" style="font-size: 0.78rem; color: #5a6a7e;">Enter a password</small>
+                                    </div>
+                                    <!-- Password Requirements -->
+                                    <div style="margin-top: 0.5rem; font-size: 0.78rem; color: #5a6a7e;">
+                                        <div id="req-length"><i class="fas fa-circle" style="font-size: 6px; vertical-align: middle;"></i> At least 8 characters</div>
+                                        <div id="req-upper"><i class="fas fa-circle" style="font-size: 6px; vertical-align: middle;"></i> One uppercase letter</div>
+                                        <div id="req-number"><i class="fas fa-circle" style="font-size: 6px; vertical-align: middle;"></i> One number</div>
+                                        <div id="req-special"><i class="fas fa-circle" style="font-size: 6px; vertical-align: middle;"></i> One special character</div>
+                                    </div>
+                                    {% if form.password1.errors %}<div style="color: #c0392b; font-size: 0.82rem; margin-top: 0.25rem;">{{ form.password1.errors.0 }}</div>{% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="id_password2" class="form-label" style="font-weight: 600; font-size: 0.88rem; color: #3a4a5c;">Confirm Password <span style="color: #c0392b;">*</span></label>
+                                    <div class="input-group">
+                                        {{ form.password2 }}
+                                        <button class="btn" type="button" onclick="togglePassword('id_password2', this)" style="border: 1.5px solid #e2e6ec; border-left: none; color: #5a6a7e;">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                    <div id="matchMsg" style="font-size: 0.78rem; margin-top: 0.5rem; display: none;">
+                                        <i class="fas fa-check-circle"></i> Passwords match
+                                    </div>
+                                    {% if form.password2.errors %}<div style="color: #c0392b; font-size: 0.82rem; margin-top: 0.25rem;">{{ form.password2.errors.0 }}</div>{% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Terms -->
+                        <div class="form-check mb-4">
+                            <input type="checkbox" class="form-check-input" id="terms" required style="border-color: #d1d8e0;">
+                            <label class="form-check-label" for="terms" style="font-size: 0.9rem; color: #3a4a5c;">
+                                I agree to the <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal" style="color: #0f2b46; font-weight: 600;">Terms and Conditions</a>
+                            </label>
+                        </div>
+
+                        <!-- Submit -->
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-lg" id="submitBtn" style="background: linear-gradient(135deg, #0f2b46 0%, #1a3d5c 100%); border: none; color: #ffffff; font-weight: 600; padding: 0.75rem; border-radius: 6px; box-shadow: 0 2px 8px rgba(15,43,70,0.2);">
                                 <i class="fas fa-user-plus"></i> Create Account
                             </button>
                         </div>
-                        
-                        <hr class="my-4">
-                        
-                        <p class="text-center mb-0">
-                            Already have an account? 
-                            <a href="{% url 'accounts:login' %}" class="fw-bold text-decoration-none">
-                                Sign in here
-                            </a>
-                        </p>
+
+                        <div style="text-align: center; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #eef1f5;">
+                            <span style="color: #5a6a7e; font-size: 0.9rem;">Already have an account?</span>
+                            <a href="{% url 'accounts:login' %}" style="font-weight: 600; color: #0f2b46; text-decoration: none; margin-left: 0.3rem;">Sign in here</a>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -57,29 +196,25 @@
 <!-- Terms Modal -->
 <div class="modal fade" id="termsModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Terms and Conditions</h5>
+        <div class="modal-content" style="border: none; border-radius: 16px;">
+            <div class="modal-header" style="background: #f7f8fa; border-bottom: 1px solid #e2e6ec;">
+                <h5 class="modal-title" style="font-family: 'DM Serif Display', Georgia, serif; color: #0f2b46;">Terms and Conditions</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <h6>1. Eligibility</h6>
+            <div class="modal-body" style="padding: 1.5rem;">
+                <h6 style="font-family: 'DM Serif Display', Georgia, serif; color: #0f2b46;">1. Eligibility</h6>
                 <p>By registering, you confirm that you are a resident of {{ CONSTITUENCY_NAME }} constituency and meet all eligibility requirements for the bursary program.</p>
-                
-                <h6>2. Information Accuracy</h6>
+                <h6 style="font-family: 'DM Serif Display', Georgia, serif; color: #0f2b46;">2. Information Accuracy</h6>
                 <p>You agree to provide accurate and truthful information. False information may lead to disqualification and legal action.</p>
-                
-                <h6>3. Document Verification</h6>
+                <h6 style="font-family: 'DM Serif Display', Georgia, serif; color: #0f2b46;">3. Document Verification</h6>
                 <p>All documents submitted will be verified. You consent to the verification process and any necessary background checks.</p>
-                
-                <h6>4. Data Privacy</h6>
+                <h6 style="font-family: 'DM Serif Display', Georgia, serif; color: #0f2b46;">4. Data Privacy</h6>
                 <p>Your personal information will be handled in accordance with data protection laws and will only be used for bursary processing purposes.</p>
-                
-                <h6>5. Communication</h6>
+                <h6 style="font-family: 'DM Serif Display', Georgia, serif; color: #0f2b46;">5. Communication</h6>
                 <p>You agree to receive communications regarding your application via the phone number and email provided.</p>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <div class="modal-footer" style="border-top: 1px solid #eef1f5;">
+                <button type="button" class="btn" data-bs-dismiss="modal" style="background: #5a6a7e; color: #fff; border: none;">Close</button>
             </div>
         </div>
     </div>
@@ -88,22 +223,266 @@
 
 {% block extra_js %}
 <script>
-    // Update progress bar based on filled fields
-    const form = document.querySelector('form');
-    const inputs = form.querySelectorAll('input:not([type="hidden"]):not([type="checkbox"])');
-    const progressBar = document.querySelector('.progress-bar');
-    
-    function updateProgress() {
-        const filledInputs = Array.from(inputs).filter(input => input.value.trim() !== '');
-        const progress = (filledInputs.length / inputs.length) * 100;
-        progressBar.style.width = progress + '%';
+(function() {
+    'use strict';
+
+    // ========== Mogotio Constituency Location Data ==========
+    // Populate with known locations. Add more as needed.
+    const locationData = {
+        'Mogotio': {
+            locations: {
+                'Mogotio Township': {
+                    subLocations: {
+                        'Mogotio': ['Mogotio Town', 'Kipng\'orom', 'Kapluk', 'Maji Mazuri'],
+                        'Kipnai': ['Kipnai', 'Koitegan', 'Kibunja'],
+                    }
+                },
+                'Kiboino': {
+                    subLocations: {
+                        'Kiboino': ['Kiboino', 'Chemugar', 'Kabimoi'],
+                        'Torongo': ['Torongo', 'Kipsimbol'],
+                    }
+                },
+                'Sinende': {
+                    subLocations: {
+                        'Sinende': ['Sinende', 'Kapkechui', 'Kiptulwa'],
+                    }
+                },
+            }
+        },
+        'Emining': {
+            locations: {
+                'Emining': {
+                    subLocations: {
+                        'Emining': ['Emining Centre', 'Kapkeben', 'Chemogoch'],
+                        'Kaptimbor': ['Kaptimbor', 'Chebinyiny'],
+                    }
+                },
+                'Gresford': {
+                    subLocations: {
+                        'Gresford': ['Gresford', 'Kibonjos', 'Kaplelach'],
+                    }
+                },
+                'Tangulbei': {
+                    subLocations: {
+                        'Tangulbei': ['Tangulbei Centre', 'Ngoron', 'Kipcherere'],
+                        'Mukutani': ['Mukutani', 'Nasinya'],
+                    }
+                },
+            }
+        },
+        'Kisanana': {
+            locations: {
+                'Kisanana': {
+                    subLocations: {
+                        'Kisanana': ['Kisanana Centre', 'Chemoinoi', 'Kipteres'],
+                        'Kapluk': ['Kapluk', 'Kipketer'],
+                    }
+                },
+                'Koibos': {
+                    subLocations: {
+                        'Koibos': ['Koibos', 'Korosio', 'Kapngetuny'],
+                    }
+                },
+                'Lawan': {
+                    subLocations: {
+                        'Lawan': ['Lawan', 'Chemususu', 'Kipsubei'],
+                    }
+                },
+            }
+        },
+    };
+
+    // ========== Cascading Dropdowns ==========
+    const wardEl = document.getElementById('id_ward');
+    const locationEl = document.getElementById('id_location');
+    const subLocEl = document.getElementById('id_sub_location');
+    const villageEl = document.getElementById('id_village');
+
+    function resetDropdown(el, placeholder) {
+        el.innerHTML = '<option value="">' + placeholder + '</option>';
+        el.disabled = true;
     }
-    
-    inputs.forEach(input => {
-        input.addEventListener('input', updateProgress);
+
+    wardEl.addEventListener('change', function() {
+        const ward = this.value;
+        resetDropdown(locationEl, 'Select Location');
+        resetDropdown(subLocEl, 'Select Sub-Location');
+        resetDropdown(villageEl, 'Select Village');
+
+        if (ward && locationData[ward]) {
+            const locs = Object.keys(locationData[ward].locations);
+            locs.forEach(function(loc) {
+                const opt = document.createElement('option');
+                opt.value = loc;
+                opt.textContent = loc;
+                locationEl.appendChild(opt);
+            });
+            locationEl.disabled = false;
+        }
     });
-    
-    // Initial progress check
+
+    locationEl.addEventListener('change', function() {
+        const ward = wardEl.value;
+        const loc = this.value;
+        resetDropdown(subLocEl, 'Select Sub-Location');
+        resetDropdown(villageEl, 'Select Village');
+
+        if (ward && loc && locationData[ward] && locationData[ward].locations[loc]) {
+            const subs = Object.keys(locationData[ward].locations[loc].subLocations);
+            subs.forEach(function(sub) {
+                const opt = document.createElement('option');
+                opt.value = sub;
+                opt.textContent = sub;
+                subLocEl.appendChild(opt);
+            });
+            subLocEl.disabled = false;
+        }
+    });
+
+    subLocEl.addEventListener('change', function() {
+        const ward = wardEl.value;
+        const loc = locationEl.value;
+        const sub = this.value;
+        resetDropdown(villageEl, 'Select Village');
+
+        if (ward && loc && sub && locationData[ward] && locationData[ward].locations[loc]) {
+            const villages = locationData[ward].locations[loc].subLocations[sub] || [];
+            villages.forEach(function(v) {
+                const opt = document.createElement('option');
+                opt.value = v;
+                opt.textContent = v;
+                villageEl.appendChild(opt);
+            });
+            villageEl.disabled = false;
+        }
+    });
+
+    // ========== Password Strength Meter ==========
+    const pw1 = document.getElementById('id_password1');
+    const pw2 = document.getElementById('id_password2');
+    const bars = [document.getElementById('str-1'), document.getElementById('str-2'), document.getElementById('str-3'), document.getElementById('str-4')];
+    const strengthText = document.getElementById('strengthText');
+    const matchMsg = document.getElementById('matchMsg');
+    const reqLength = document.getElementById('req-length');
+    const reqUpper = document.getElementById('req-upper');
+    const reqNumber = document.getElementById('req-number');
+    const reqSpecial = document.getElementById('req-special');
+
+    const colors = { weak: '#c0392b', fair: '#d4920b', good: '#2980b9', strong: '#1a8754' };
+
+    function checkReq(el, passed) {
+        if (passed) {
+            el.style.color = '#1a8754';
+            el.querySelector('i').className = 'fas fa-check-circle';
+            el.querySelector('i').style.fontSize = '10px';
+        } else {
+            el.style.color = '#5a6a7e';
+            el.querySelector('i').className = 'fas fa-circle';
+            el.querySelector('i').style.fontSize = '6px';
+        }
+    }
+
+    if (pw1) {
+        pw1.addEventListener('input', function() {
+            const val = this.value;
+            let score = 0;
+            const hasLength = val.length >= 8;
+            const hasUpper = /[A-Z]/.test(val);
+            const hasNumber = /[0-9]/.test(val);
+            const hasSpecial = /[^A-Za-z0-9]/.test(val);
+
+            if (hasLength) score++;
+            if (hasUpper) score++;
+            if (hasNumber) score++;
+            if (hasSpecial) score++;
+
+            checkReq(reqLength, hasLength);
+            checkReq(reqUpper, hasUpper);
+            checkReq(reqNumber, hasNumber);
+            checkReq(reqSpecial, hasSpecial);
+
+            const labels = ['', 'Weak', 'Fair', 'Good', 'Strong'];
+            const colorKeys = ['', 'weak', 'fair', 'good', 'strong'];
+
+            bars.forEach(function(bar, i) {
+                if (i < score) {
+                    bar.style.background = colors[colorKeys[score]];
+                } else {
+                    bar.style.background = '#e2e6ec';
+                }
+            });
+
+            if (val.length === 0) {
+                strengthText.textContent = 'Enter a password';
+                strengthText.style.color = '#5a6a7e';
+            } else {
+                strengthText.textContent = labels[score] + ' password';
+                strengthText.style.color = colors[colorKeys[score]];
+            }
+
+            checkMatch();
+        });
+    }
+
+    function checkMatch() {
+        if (!pw2 || !pw1) return;
+        if (pw2.value.length > 0 && pw1.value.length > 0) {
+            if (pw1.value === pw2.value) {
+                matchMsg.style.display = 'block';
+                matchMsg.style.color = '#1a8754';
+                matchMsg.innerHTML = '<i class="fas fa-check-circle"></i> Passwords match';
+            } else {
+                matchMsg.style.display = 'block';
+                matchMsg.style.color = '#c0392b';
+                matchMsg.innerHTML = '<i class="fas fa-times-circle"></i> Passwords do not match';
+            }
+        } else {
+            matchMsg.style.display = 'none';
+        }
+    }
+
+    if (pw2) {
+        pw2.addEventListener('input', checkMatch);
+    }
+
+    // ========== Progress Bar ==========
+    const form = document.getElementById('registerForm');
+    const inputs = form.querySelectorAll('input:not([type="hidden"]):not([type="checkbox"]), select');
+    const progressBar = document.getElementById('formProgress');
+
+    function updateProgress() {
+        let filled = 0;
+        let total = 0;
+        inputs.forEach(function(input) {
+            if (input.name && input.name !== 'csrfmiddlewaretoken') {
+                total++;
+                if (input.value && input.value.trim() !== '') filled++;
+            }
+        });
+        const pct = total > 0 ? Math.round((filled / total) * 100) : 0;
+        progressBar.style.width = pct + '%';
+    }
+
+    inputs.forEach(function(input) {
+        input.addEventListener('input', updateProgress);
+        input.addEventListener('change', updateProgress);
+    });
     updateProgress();
+
+    // ========== Toggle Password Visibility ==========
+    window.togglePassword = function(fieldId, btn) {
+        const field = document.getElementById(fieldId);
+        const icon = btn.querySelector('i');
+        if (field.type === 'password') {
+            field.type = 'text';
+            icon.className = 'fas fa-eye-slash';
+        } else {
+            field.type = 'password';
+            icon.className = 'fas fa-eye';
+        }
+    };
+
+})();
 </script>
 {% endblock %}

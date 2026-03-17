@@ -45,9 +45,10 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             # Applicant dashboard
             applications = BursaryApplication.objects.filter(
                 applicant=user
-            ).select_related('academic_year')
+            ).select_related('academic_year', 'institution')
 
             context['applications'] = applications
+            context['recent_applications'] = applications.order_by('-created_at')[:10]
             context['total_applications'] = applications.count()
             context['pending_applications'] = applications.filter(
                 status__in=['draft', 'submitted', 'under_review']
@@ -84,8 +85,8 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             ).count()
 
             # Recent applications
-            context['recent_applications'] = all_applications.select_related(
-                'applicant', 'academic_year'
+            context['recent_submissions'] = all_applications.select_related(
+                'applicant', 'academic_year', 'institution'
             ).order_by('-submitted_at')[:10]
 
             # Statistics
@@ -287,17 +288,49 @@ class ApplicationReviewView(LoginRequiredMixin, UserPassesTestMixin, FormView):
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['application'] = self.get_application()
+        kwargs['user'] = self.request.user
         return kwargs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['application'] = self.get_application()
+        application = self.get_application()
+        context['application'] = application
+        # FormView passes the form as 'form' — template expects 'review_form'
+        context['review_form'] = context.get('form')
+        # Calculate bursary score
+        context['bursary_score'] = calculate_bursary_score(application)
+
+        # Documents in NG-CDF order (by DOCUMENT_TYPES list position)
+        type_order = [t[0] for t in ApplicationDocument.DOCUMENT_TYPES]
+        docs = list(application.documents.all())
+        docs.sort(key=lambda d: type_order.index(d.document_type) if d.document_type in type_order else 999)
+        context['documents_ordered'] = docs
+
+        # Figure out which required docs are missing
+        uploaded_types = set(d.document_type for d in docs)
+        required = ['transcript', 'parent_id', 'birth_certificate', 'fee_structure']
+        if application.education_level in ('tvet', 'undergraduate', 'postgraduate'):
+            required.extend(['student_id', 'admission_letter'])
+        if application.education_level in ('secondary', 'tvet', 'undergraduate', 'postgraduate'):
+            required.append('school_id')
+        if application.is_orphan:
+            required.append('death_certificate')
+        if application.has_disability:
+            required.append('disability_cert')
+        doc_labels = dict(ApplicationDocument.DOCUMENT_TYPES)
+        context['missing_doc_types'] = [doc_labels.get(d, d) for d in required if d not in uploaded_types]
+
         return context
 
     def form_valid(self, form):
         application = self.get_application()
         old_status = application.status
         new_status = form.cleaned_data['status']
+
+        # Extra server-side guard: only approvers can approve
+        if new_status == 'approved' and not self.request.user.can_approve_applications:
+            messages.error(self.request, 'You do not have permission to approve applications.')
+            return redirect('bursary:application_review', pk=application.pk)
 
         # Update application
         application.status = new_status
@@ -327,7 +360,7 @@ class ApplicationReviewView(LoginRequiredMixin, UserPassesTestMixin, FormView):
         )
 
         # Send notification
-        send_application_status_notification(application, old_status)
+        send_application_status_notification(application, old_status, new_status)
 
         messages.success(
             self.request,
@@ -347,19 +380,63 @@ class ReportsView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        import json
+        from django.db.models.functions import TruncMonth
 
-        # Get active academic year
-        active_year = AcademicYear.objects.filter(is_active=True).first()
+        # Get academic year filter
+        year_id = self.request.GET.get('year')
+        active_year = None
+        if year_id:
+            active_year = AcademicYear.objects.filter(pk=year_id).first()
+        if not active_year:
+            active_year = AcademicYear.objects.filter(is_active=True).first()
+
+        context['active_year'] = active_year
+        context['academic_years'] = AcademicYear.objects.all().order_by('-year')
+
+        # Base queryset
         if active_year:
-            context['report_data'] = generate_application_report(active_year)
+            apps = BursaryApplication.objects.filter(academic_year=active_year)
+        else:
+            apps = BursaryApplication.objects.all()
 
-        # Additional statistics
-        all_applications = BursaryApplication.objects.filter(
-            academic_year=active_year
-        ) if active_year else BursaryApplication.objects.all()
+        total = apps.count()
+        if total == 0:
+            context['report_data'] = None
+            return context
 
-        # By ward distribution
-        context['ward_distribution'] = all_applications.values(
+        # === Summary stats ===
+        total_requested = apps.aggregate(s=Sum('amount_requested'))['s'] or 0
+        total_approved = apps.filter(status__in=['approved', 'disbursed']).aggregate(s=Sum('approved_amount'))['s'] or 0
+        avg_requested = apps.aggregate(a=Avg('amount_requested'))['a'] or 0
+
+        context['report_data'] = {
+            'total_applications': total,
+            'total_requested': total_requested,
+            'total_approved': total_approved,
+            'average_requested': avg_requested,
+        }
+
+        # === Status distribution (for chart) ===
+        status_counts = {}
+        for code, label in BursaryApplication.STATUS_CHOICES:
+            c = apps.filter(status=code).count()
+            if c > 0:
+                status_counts[label] = c
+        context['status_chart_labels'] = json.dumps(list(status_counts.keys()))
+        context['status_chart_data'] = json.dumps(list(status_counts.values()))
+
+        # === Education level distribution (for chart) ===
+        edu_counts = {}
+        for code, label in BursaryApplication.EDUCATION_LEVEL_CHOICES:
+            c = apps.filter(education_level=code).count()
+            if c > 0:
+                edu_counts[label] = c
+        context['education_chart_labels'] = json.dumps(list(edu_counts.keys()))
+        context['education_chart_data'] = json.dumps(list(edu_counts.values()))
+
+        # === Ward distribution ===
+        context['ward_distribution'] = apps.values(
             'applicant__ward'
         ).annotate(
             count=Count('id'),
@@ -367,33 +444,53 @@ class ReportsView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
             total_approved=Sum('approved_amount')
         ).order_by('-count')[:10]
 
-        # By institution
-        context['institution_distribution'] = all_applications.values(
+        # === Institution distribution ===
+        context['institution_distribution'] = apps.exclude(
+            institution__isnull=True
+        ).values(
             'institution__name'
         ).annotate(
             count=Count('id')
         ).order_by('-count')[:10]
 
-        # Monthly trends
-        context['monthly_applications'] = all_applications.extra(
-            select={'month': "DATE_TRUNC('month', submitted_at)"}
-        ).values('month').annotate(count=Count('id')).order_by('month')
+        # === Special cases ===
+        context['special_cases'] = {
+            'orphans': apps.filter(is_orphan=True).count(),
+            'single_parent': apps.filter(is_single_parent=True).count(),
+            'disabled': apps.filter(has_disability=True).count(),
+        }
 
-        # Approval rate by education level
+        # === Monthly trends ===
+        monthly = apps.filter(
+            submitted_at__isnull=False
+        ).annotate(
+            month=TruncMonth('submitted_at')
+        ).values('month').annotate(
+            count=Count('id')
+        ).order_by('month')
+
+        month_labels = []
+        month_data = []
+        for entry in monthly:
+            if entry['month']:
+                month_labels.append(entry['month'].strftime('%b %Y'))
+                month_data.append(entry['count'])
+        context['monthly_labels'] = json.dumps(month_labels)
+        context['monthly_data'] = json.dumps(month_data)
+
+        # === Education level approval rates ===
         education_stats = []
         for level, label in BursaryApplication.EDUCATION_LEVEL_CHOICES:
-            level_apps = all_applications.filter(education_level=level)
-            total = level_apps.count()
-            approved = level_apps.filter(status='approved').count()
-
-            if total > 0:
+            level_apps = apps.filter(education_level=level)
+            t = level_apps.count()
+            a = level_apps.filter(status__in=['approved', 'disbursed']).count()
+            if t > 0:
                 education_stats.append({
                     'level': label,
-                    'total': total,
-                    'approved': approved,
-                    'approval_rate': (approved / total) * 100
+                    'total': t,
+                    'approved': a,
+                    'approval_rate': round((a / t) * 100, 1)
                 })
-
         context['education_stats'] = education_stats
 
         return context
@@ -405,26 +502,76 @@ class ExportApplicationsView(LoginRequiredMixin, UserPassesTestMixin, View):
         return self.request.user.can_review_applications
 
     def get(self, request):
+        import csv
+
         # Get filtered queryset
         queryset = BursaryApplication.objects.select_related(
             'applicant', 'academic_year', 'institution'
         ).exclude(status='draft')
 
-        # Apply filters from GET params
+        # Apply filters
         status_filter = request.GET.get('status')
         if status_filter:
             queryset = queryset.filter(status=status_filter)
-
         education_filter = request.GET.get('education_level')
         if education_filter:
             queryset = queryset.filter(education_level=education_filter)
+        year_filter = request.GET.get('year')
+        if year_filter:
+            queryset = queryset.filter(academic_year_id=year_filter)
 
-        # Create CSV response
+        # Build CSV response
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="bursary_applications.csv"'
+        writer = csv.writer(response)
 
-        # Export to CSV
-        export_applications_to_csv(queryset, response)
+        # Headers
+        writer.writerow([
+            'Application #', 'Academic Year', 'Applicant Name', 'ID Number',
+            'Phone', 'Email', 'Ward', 'Location', 'Education Level',
+            'Institution', 'Course', 'Year of Study',
+            'Total Fees', 'Amount Requested', 'Other Support', 'Approved Amount',
+            'Family Monthly Income', 'No. of Siblings', 'Siblings in School',
+            'Is Orphan', 'Single Parent', 'Disability', 'Family Status',
+            'Academic Performance', 'Previous CDF Support',
+            'Status', 'Submitted At', 'Reviewed By', 'Approved By',
+            'Bursary Score',
+        ])
+
+        # Rows
+        for app in queryset:
+            writer.writerow([
+                app.application_number,
+                str(app.academic_year) if app.academic_year else '',
+                app.applicant.get_full_name(),
+                app.applicant.id_number,
+                str(app.applicant.phone_number),
+                app.applicant.email,
+                app.applicant.ward,
+                app.applicant.location,
+                app.get_education_level_display(),
+                app.institution.name if app.institution else app.institution_name_other,
+                app.course_name,
+                app.year_of_study,
+                app.total_fees,
+                app.amount_requested,
+                app.other_support,
+                app.approved_amount or '',
+                app.family_monthly_income,
+                app.number_of_siblings,
+                app.siblings_in_school,
+                'Yes' if app.is_orphan else 'No',
+                'Yes' if app.is_single_parent else 'No',
+                'Yes' if app.has_disability else 'No',
+                app.get_family_status_display() if app.family_status else '',
+                app.get_academic_performance_display() if app.academic_performance else '',
+                'Yes' if app.previous_cdf_support else 'No',
+                app.get_status_display(),
+                app.submitted_at.strftime('%Y-%m-%d %H:%M') if app.submitted_at else '',
+                app.reviewed_by.get_full_name() if app.reviewed_by else '',
+                app.approved_by.get_full_name() if app.approved_by else '',
+                calculate_bursary_score(app),
+            ])
 
         return response
 
@@ -474,7 +621,8 @@ class DisbursementCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView
         # Update application status
         application = form.instance.application
         old_status = application.status
-        application.status = 'disbursed'
+        new_status = 'disbursed'
+        application.status = new_status
         application.save()
 
         # Create status log
@@ -487,7 +635,7 @@ class DisbursementCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView
         )
 
         # Send notification
-        send_application_status_notification(application, old_status)
+        send_application_status_notification(application, old_status, new_status)
 
         messages.success(
             self.request,
@@ -652,7 +800,7 @@ class BursaryApplicationViewSet(viewsets.ModelViewSet):
         application.save()
 
         # Send notification
-        send_application_submitted_notification(application)
+        send_application_submitted_notification(request, application)
 
         return Response({'status': 'submitted'})
 
@@ -734,20 +882,95 @@ class ApplicationSubmitView(LoginRequiredMixin, UserPassesTestMixin, View):
     def post(self, request, pk):
         application = get_object_or_404(BursaryApplication, pk=pk)
 
+        # Check declarations
+        student_decl = request.POST.get('student_declaration')
+        guardian_decl = request.POST.get('guardian_declaration')
+
+        if not student_decl or not guardian_decl:
+            messages.error(
+                request,
+                'You must accept both the Student Declaration and the Parent/Guardian Declaration before submitting.'
+            )
+            return redirect('bursary:document_upload', pk=pk)
+
         # Check if required documents are uploaded
-        required_docs = ['admission_letter', 'fee_structure', 'id_copy']
-        uploaded_types = application.documents.values_list('document_type', flat=True)
+        required_docs = ['fee_structure', 'transcript', 'parent_id', 'birth_certificate']
+
+        # Add conditional requirements based on education level
+        if application.education_level in ('tvet', 'undergraduate', 'postgraduate'):
+            required_docs.extend(['student_id', 'admission_letter'])
+        if application.education_level in ('secondary', 'tvet', 'undergraduate', 'postgraduate'):
+            required_docs.append('school_id')
+
+        # Add conditional requirements based on circumstances
+        if application.is_orphan:
+            required_docs.append('death_certificate')
+        if application.has_disability:
+            required_docs.append('disability_cert')
+
+        uploaded_types = list(application.documents.values_list('document_type', flat=True))
 
         missing_docs = [doc for doc in required_docs if doc not in uploaded_types]
 
         if missing_docs:
+            # Build a readable list of missing document names
+            doc_type_labels = dict(ApplicationDocument.DOCUMENT_TYPES)
+            missing_names = [doc_type_labels.get(d, d).split('(')[0].strip().lstrip('0123456789. ') for d in missing_docs]
             messages.error(
                 request,
-                'Please upload all required documents before submitting.'
+                f'Please upload the following required documents before submitting: {", ".join(missing_names)}'
             )
             return redirect('bursary:document_upload', pk=pk)
 
-        # Submit application
+        # Record declarations and submit
+        application.student_declaration_accepted = True
+        application.guardian_declaration_accepted = True
+        application.declaration_accepted_at = timezone.now()
+
+        # Handle optional signature uploads with strict validation
+        SIG_MAX_SIZE = 500 * 1024  # 500KB
+        SIG_MIN_W, SIG_MAX_W = 200, 800
+        SIG_MIN_H, SIG_MAX_H = 50, 300
+        SIG_ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/jpg']
+
+        def validate_signature(file_obj, label):
+            """Validate signature image dimensions and size. Returns error string or None."""
+            if file_obj.size > SIG_MAX_SIZE:
+                return f'{label}: File size is {file_obj.size // 1024}KB — maximum is 500KB.'
+            if file_obj.content_type not in SIG_ALLOWED_TYPES:
+                return f'{label}: Only PNG and JPG images are accepted.'
+            try:
+                from PIL import Image
+                img = Image.open(file_obj)
+                w, h = img.size
+                file_obj.seek(0)  # Reset file pointer after reading
+                if w < SIG_MIN_W or w > SIG_MAX_W:
+                    return f'{label}: Width is {w}px — must be between {SIG_MIN_W}–{SIG_MAX_W}px.'
+                if h < SIG_MIN_H or h > SIG_MAX_H:
+                    return f'{label}: Height is {h}px — must be between {SIG_MIN_H}–{SIG_MAX_H}px.'
+            except Exception:
+                return f'{label}: Could not read image. Please upload a valid PNG or JPG.'
+            return None
+
+        sig_errors = []
+        if 'student_signature' in request.FILES:
+            err = validate_signature(request.FILES['student_signature'], "Student's signature")
+            if err:
+                sig_errors.append(err)
+            else:
+                application.student_signature = request.FILES['student_signature']
+        if 'guardian_signature' in request.FILES:
+            err = validate_signature(request.FILES['guardian_signature'], "Guardian's signature")
+            if err:
+                sig_errors.append(err)
+            else:
+                application.guardian_signature = request.FILES['guardian_signature']
+
+        if sig_errors:
+            for e in sig_errors:
+                messages.error(request, e)
+            return redirect('bursary:document_upload', pk=pk)
+
         application.status = 'submitted'
         application.submitted_at = timezone.now()
         application.save()
@@ -762,7 +985,7 @@ class ApplicationSubmitView(LoginRequiredMixin, UserPassesTestMixin, View):
         )
 
         # Send notification
-        send_application_submitted_notification(application)
+        send_application_submitted_notification(request, application)
 
         messages.success(
             request,
@@ -838,30 +1061,46 @@ class DocumentUploadView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['application'] = get_object_or_404(
+        application = get_object_or_404(
             BursaryApplication,
             pk=self.kwargs['pk']
         )
-        context['documents'] = ApplicationDocument.objects.filter(
+        context['application'] = application
+        documents = ApplicationDocument.objects.filter(
             application_id=self.kwargs['pk']
         )
+        context['documents'] = documents
 
-        # Required documents
+        # Build a simple list of uploaded document type keys for easy checking
+        context['uploaded_types'] = list(documents.values_list('document_type', flat=True))
+
+        # Required documents (mandatory for ALL applicants)
         context['required_docs'] = [
-            ('admission_letter', 'Admission Letter'),
-            ('fee_structure', 'Fee Structure'),
-            ('id_copy', 'ID Card Copy'),
+            ('fee_structure', 'Current Fees Structure'),
+            ('transcript', "Student's Transcript / Report Form"),
+            ('parent_id', "Parent's / Guardian's National ID Copy"),
+            ('birth_certificate', 'Birth Certificate Copy'),
         ]
 
-        # Optional documents based on circumstances
-        application = context['application']
-        optional_docs = []
+        # Conditionally required based on education level
+        conditional_docs = []
+        if application.education_level in ('tvet', 'undergraduate', 'postgraduate'):
+            conditional_docs.append(('student_id', "Student's National ID Copy"))
+            conditional_docs.append(('admission_letter', 'Admission Letter'))
+        if application.education_level in ('secondary', 'tvet', 'undergraduate', 'postgraduate'):
+            conditional_docs.append(('school_id', 'Secondary / College / University ID Card Copy'))
+        context['conditional_docs'] = conditional_docs
 
+        # Optional documents based on circumstances
+        optional_docs = []
         if application.is_orphan:
-            optional_docs.append(('death_certificate', 'Death Certificate'))
+            optional_docs.append(('death_certificate', 'Death Certificate / Burial Permit'))
         if application.has_disability:
             optional_docs.append(('disability_cert', 'Disability Certificate'))
-
+        if getattr(application, 'has_chronic_illness', False):
+            optional_docs.append(('medical_report', 'Medical Report / Chronic Illness Evidence'))
+        optional_docs.append(('chief_letter', 'Verification Letter from Area Chief'))
+        optional_docs.append(('recommendation_letter', 'Recommendation Letter'))
         context['optional_docs'] = optional_docs
 
         return context
@@ -929,7 +1168,10 @@ class ApplicationStatusView(LoginRequiredMixin, UserPassesTestMixin, DetailView)
 
     def test_func(self):
         application = self.get_object()
-        return application.applicant == self.request.user
+        return (
+            application.applicant == self.request.user or
+            self.request.user.can_review_applications
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -1005,7 +1247,7 @@ class AdminApplicationListView(LoginRequiredMixin, UserPassesTestMixin, ListView
 class AdminApplicationDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
     """Admin view for application details"""
     model = BursaryApplication
-    template_name = 'bursary/admin_application_detail.html'
+    template_name = 'bursary/application_detail.html'
     context_object_name = 'application'
 
     def test_func(self):
@@ -1108,7 +1350,7 @@ class EmailVerificationView(View):
                 user.save()
 
             # Log the user in
-            login(request, user)
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
 
             messages.success(request, 'Your email has been verified successfully! You can now proceed with your application.')
 

@@ -1,253 +1,454 @@
 {% extends 'base.html' %}
 {% load static %}
-{% load crispy_forms_tags %}
 
 {% block title %}
 {% if form.instance.pk %}Edit{% else %}New{% endif %} Bursary Application - {{ block.super }}
 {% endblock %}
 
+{% block extra_css %}
+<style>
+.section-card { border: none; border-radius: 12px; box-shadow: 0 1px 3px rgba(15,43,70,0.06); margin-bottom: 1.5rem; }
+.section-header { background: #f7f8fa; border-bottom: 2px solid #e2e6ec; padding: 0.9rem 1.25rem; border-radius: 12px 12px 0 0; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+.section-header h5 { font-family: 'DM Serif Display', Georgia, serif; color: #0f2b46; margin: 0; font-size: 1.05rem; }
+.section-header .section-icon { color: #c9a84c; margin-right: 0.5rem; }
+.section-header .toggle-icon { color: #5a6a7e; transition: transform 0.3s; }
+.section-header.collapsed .toggle-icon { transform: rotate(-90deg); }
+.section-body { padding: 1.25rem; }
+.field-label { font-weight: 600; font-size: 0.82rem; color: #3a4a5c; margin-bottom: 0.3rem; text-transform: uppercase; letter-spacing: 0.04em; }
+.field-help { font-size: 0.78rem; color: #5a6a7e; margin-top: 0.2rem; }
+.field-error { color: #c0392b; font-size: 0.82rem; margin-top: 0.2rem; }
+.section-num { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(135deg, #0f2b46, #1a3d5c); color: #c9a84c; font-size: 0.75rem; font-weight: 700; margin-right: 0.6rem; }
+.conditional-field { display: none; }
+.conditional-field.show { display: block; }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
+<div class="container mt-4 mb-5">
     <div class="row justify-content-center">
-        <div class="col-md-10">
+        <div class="col-lg-10">
             <!-- Progress Steps -->
-            <div class="progress-steps mb-4">
-                <div class="progress-step active">
-                    <div class="progress-step-icon">
-                        <i class="fas fa-edit"></i>
-                    </div>
-                    <small>Application Form</small>
+            <div class="progress-steps mb-4" style="display: flex; justify-content: space-between; padding: 0 2rem;">
+                <div class="progress-step active" style="flex: 1; text-align: center; position: relative;">
+                    <div style="width: 44px; height: 44px; border-radius: 50%; background: #0f2b46; color: #c9a84c; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 0.5rem; border: 2px solid #0f2b46; box-shadow: 0 4px 12px rgba(15,43,70,0.2);"><i class="fas fa-edit"></i></div>
+                    <br><small style="font-weight: 600; font-size: 0.78rem; color: #0f2b46; text-transform: uppercase;">Application Form</small>
                 </div>
-                <div class="progress-step">
-                    <div class="progress-step-icon">
-                        <i class="fas fa-upload"></i>
-                    </div>
-                    <small>Upload Documents</small>
+                <div class="progress-step" style="flex: 1; text-align: center;">
+                    <div style="width: 44px; height: 44px; border-radius: 50%; background: #eef1f5; color: #5a6a7e; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 0.5rem; border: 2px solid #e2e6ec;"><i class="fas fa-upload"></i></div>
+                    <br><small style="font-weight: 600; font-size: 0.78rem; color: #5a6a7e; text-transform: uppercase;">Upload Documents</small>
                 </div>
-                <div class="progress-step">
-                    <div class="progress-step-icon">
-                        <i class="fas fa-check"></i>
-                    </div>
-                    <small>Submit</small>
+                <div class="progress-step" style="flex: 1; text-align: center;">
+                    <div style="width: 44px; height: 44px; border-radius: 50%; background: #eef1f5; color: #5a6a7e; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 0.5rem; border: 2px solid #e2e6ec;"><i class="fas fa-check"></i></div>
+                    <br><small style="font-weight: 600; font-size: 0.78rem; color: #5a6a7e; text-transform: uppercase;">Submit</small>
                 </div>
             </div>
-            
-            <div class="card shadow">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0">
-                        <i class="fas fa-file-alt"></i> 
-                        {% if object %}Edit{% else %}New{% endif %} Bursary Application
-                    </h4>
-                </div>
-                <div class="card-body">
-                    {% if messages %}
-                        {% for message in messages %}
-                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                                {{ message }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+
+            <!-- Page Header -->
+            <div style="background: linear-gradient(135deg, #0f2b46 0%, #1a3d5c 100%); border-radius: 12px 12px 0 0; padding: 1.25rem 1.5rem; border-bottom: 3px solid #c9a84c;">
+                <h4 style="font-family: 'DM Serif Display', Georgia, serif; color: #fff; margin: 0;">
+                    <i class="fas fa-file-alt" style="color: #c9a84c;"></i>
+                    {% if object %}Edit{% else %}New{% endif %} Bursary Application
+                </h4>
+                <small style="color: rgba(255,255,255,0.6);">Mogotio Constituency NG-CDF Bursary Fund &bull; All fields marked * are required</small>
+            </div>
+
+            {% if form.non_field_errors %}
+            <div class="alert" style="background: rgba(192,57,43,0.08); border-left: 4px solid #c0392b; border-radius: 0; margin: 0; padding: 1rem 1.5rem;">
+                <i class="fas fa-exclamation-circle" style="color: #c0392b;"></i>
+                {% for error in form.non_field_errors %}{{ error }}<br>{% endfor %}
+            </div>
+            {% endif %}
+
+            <form method="post" novalidate id="applicationForm" style="background: #fff; border: 1px solid #e2e6ec; border-top: none; border-radius: 0 0 12px 12px; overflow: hidden;">
+                {% csrf_token %}
+
+                <!-- ============================================ -->
+                <!-- PART A: PERSONAL & INSTITUTIONAL DETAILS     -->
+                <!-- ============================================ -->
+                <div class="section-card" style="border-radius: 0; margin-bottom: 0; border-bottom: 1px solid #e2e6ec;">
+                    <div class="section-header" data-bs-toggle="collapse" data-bs-target="#secInstitution">
+                        <h5><span class="section-num">1</span><i class="fas fa-graduation-cap section-icon"></i> Educational &amp; Institutional Details</h5>
+                        <i class="fas fa-chevron-down toggle-icon"></i>
+                    </div>
+                    <div class="collapse show" id="secInstitution">
+                        <div class="section-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="field-label">Education Level *</label>
+                                    {{ form.education_level }}
+                                    {% if form.education_level.errors %}<div class="field-error">{{ form.education_level.errors.0 }}</div>{% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="field-label">Institution *</label>
+                                    {{ form.institution }}
+                                    {% if form.institution.errors %}<div class="field-error">{{ form.institution.errors.0 }}</div>{% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="field-label">Or enter institution name</label>
+                                    {{ form.new_institution_name }}
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="field-label">Admission/Reg. Number *</label>
+                                    {{ form.admission_number }}
+                                    {% if form.admission_number.errors %}<div class="field-error">{{ form.admission_number.errors.0 }}</div>{% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="field-label">Course / Class *</label>
+                                    {{ form.course_name }}
+                                    {% if form.course_name.errors %}<div class="field-error">{{ form.course_name.errors.0 }}</div>{% endif %}
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="field-label">Year of Study *</label>
+                                    {{ form.year_of_study }}
+                                    {% if form.year_of_study.errors %}<div class="field-error">{{ form.year_of_study.errors.0 }}</div>{% endif %}
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="field-label">Mode of Study</label>
+                                    {{ form.mode_of_study }}
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="field-label">Campus / Branch</label>
+                                    {{ form.campus_branch }}
+                                    <div class="field-help">For tertiary institutions and universities</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="field-label">Faculty / Department</label>
+                                    {{ form.faculty_department }}
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="field-label">Course Duration (Years)</label>
+                                    {{ form.course_duration }}
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="field-label">Expected Completion</label>
+                                    {{ form.expected_completion }}
+                                    <div class="field-help">Format: MM/YYYY</div>
+                                </div>
                             </div>
-                        {% endfor %}
-                    {% endif %}
-                    
-                    <form method="post" class="needs-validation" novalidate data-loading>
-                        {% csrf_token %}
-                        {{ form|crispy }}
-                        
-                        <div class="alert alert-info mt-4">
-                            <h6><i class="fas fa-info-circle"></i> Important Notes:</h6>
-                            <ul class="mb-0">
-                                <li>Ensure all information provided is accurate and truthful.</li>
-                                <li>You will need to upload supporting documents in the next step.</li>
-                                <li>False information may lead to disqualification.</li>
-                                <li>You can save as draft and complete later.</li>
-                            </ul>
                         </div>
-                        
-                        <div class="d-flex justify-content-between mt-4">
-                            <button type="submit" name="save_draft" class="btn btn-secondary">
-                                <i class="fas fa-save"></i> Save as Draft
-                            </button>
-                            <button type="submit" name="save_continue" class="btn btn-primary">
-                                Save and Continue <i class="fas fa-arrow-right"></i>
-                            </button>
-                        </div>
-                    </form>
+                    </div>
                 </div>
-            </div>
+
+                <!-- ============================================ -->
+                <!-- PART A: FINANCIAL INFORMATION                -->
+                <!-- ============================================ -->
+                <div class="section-card" style="border-radius: 0; margin-bottom: 0; border-bottom: 1px solid #e2e6ec;">
+                    <div class="section-header" data-bs-toggle="collapse" data-bs-target="#secFinancial">
+                        <h5><span class="section-num">2</span><i class="fas fa-money-bill-wave section-icon"></i> Financial Information</h5>
+                        <i class="fas fa-chevron-down toggle-icon"></i>
+                    </div>
+                    <div class="collapse show" id="secFinancial">
+                        <div class="section-body">
+                            <p class="field-help mb-3">All amounts in Kenya Shillings (KES)</p>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="field-label">Total Fees Required *</label>
+                                    {{ form.total_fees }}
+                                    {% if form.total_fees.errors %}<div class="field-error">{{ form.total_fees.errors.0 }}</div>{% endif %}
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="field-label">Amount Applied For *</label>
+                                    {{ form.amount_requested }}
+                                    {% if form.amount_requested.errors %}<div class="field-error">{{ form.amount_requested.errors.0 }}</div>{% endif %}
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="field-label">Other Financial Support</label>
+                                    {{ form.other_support }}
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="field-label">Annual Fees (per structure)</label>
+                                    {{ form.annual_fees_per_structure }}
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="field-label">Last Term/Semester Balance</label>
+                                    {{ form.last_term_balance }}
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="field-label">This Term/Semester Balance</label>
+                                    {{ form.current_term_balance }}
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="field-label">Next Term/Semester Balance</label>
+                                    {{ form.next_term_balance }}
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="field-label">HELB Loan (if applicable)</label>
+                                    {{ form.helb_loan_amount }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================ -->
+                <!-- PART A: FAMILY BACKGROUND                    -->
+                <!-- ============================================ -->
+                <div class="section-card" style="border-radius: 0; margin-bottom: 0; border-bottom: 1px solid #e2e6ec;">
+                    <div class="section-header" data-bs-toggle="collapse" data-bs-target="#secFamily">
+                        <h5><span class="section-num">3</span><i class="fas fa-users section-icon"></i> Family Background</h5>
+                        <i class="fas fa-chevron-down toggle-icon"></i>
+                    </div>
+                    <div class="collapse show" id="secFamily">
+                        <div class="section-body">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="field-label">Family Status</label>
+                                    {{ form.family_status }}
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="field-label">If other, specify</label>
+                                    {{ form.family_status_other }}
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="field-label">Family Monthly Income (KES) *</label>
+                                    {{ form.family_monthly_income }}
+                                    {% if form.family_monthly_income.errors %}<div class="field-error">{{ form.family_monthly_income.errors.0 }}</div>{% endif %}
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="field-label">Annual Family Income (KES)</label>
+                                    {{ form.family_annual_income }}
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="field-label">Annual Family Expenses (KES)</label>
+                                    {{ form.family_annual_expenses }}
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="field-label">No. of Siblings *</label>
+                                    {{ form.number_of_siblings }}
+                                    {% if form.number_of_siblings.errors %}<div class="field-error">{{ form.number_of_siblings.errors.0 }}</div>{% endif %}
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="field-label">Siblings in School</label>
+                                    {{ form.siblings_in_school }}
+                                </div>
+                                <div class="col-12"><hr style="border-color: #eef1f5;"></div>
+                                <div class="col-12"><h6 style="font-family: 'DM Serif Display', Georgia, serif; color: #0f2b46;">a) Father's Details</h6></div>
+                                <div class="col-md-4"><label class="field-label">Full Name</label>{{ form.father_name }}</div>
+                                <div class="col-md-4"><label class="field-label">Telephone</label>{{ form.father_telephone }}</div>
+                                <div class="col-md-4"><label class="field-label">Address</label>{{ form.father_address }}</div>
+                                <div class="col-md-4"><label class="field-label">Occupation</label>{{ form.father_occupation }}</div>
+                                <div class="col-md-4"><label class="field-label">Employment Type</label>{{ form.father_employment_type }}</div>
+                                <div class="col-md-4"><label class="field-label">Main Income Source</label>{{ form.father_income_source }}</div>
+                                <div class="col-12"><hr style="border-color: #eef1f5;"></div>
+                                <div class="col-12"><h6 style="font-family: 'DM Serif Display', Georgia, serif; color: #0f2b46;">b) Mother's Details</h6></div>
+                                <div class="col-md-4"><label class="field-label">Full Name</label>{{ form.mother_name }}</div>
+                                <div class="col-md-4"><label class="field-label">Telephone</label>{{ form.mother_telephone }}</div>
+                                <div class="col-md-4"><label class="field-label">Address</label>{{ form.mother_address }}</div>
+                                <div class="col-md-4"><label class="field-label">Occupation</label>{{ form.mother_occupation }}</div>
+                                <div class="col-md-4"><label class="field-label">Employment Type</label>{{ form.mother_employment_type }}</div>
+                                <div class="col-md-4"><label class="field-label">Main Income Source</label>{{ form.mother_income_source }}</div>
+                                <div class="col-12"><hr style="border-color: #eef1f5;"></div>
+                                <div class="col-12"><h6 style="font-family: 'DM Serif Display', Georgia, serif; color: #0f2b46;">c) Guardian's Details</h6></div>
+                                <div class="col-md-4"><label class="field-label">Full Name</label>{{ form.app_guardian_name }}</div>
+                                <div class="col-md-4"><label class="field-label">Telephone</label>{{ form.app_guardian_telephone }}</div>
+                                <div class="col-md-4"><label class="field-label">Address</label>{{ form.app_guardian_address }}</div>
+                                <div class="col-md-4"><label class="field-label">Occupation</label>{{ form.app_guardian_occupation }}</div>
+                                <div class="col-md-4"><label class="field-label">Employment Type</label>{{ form.app_guardian_employment_type }}</div>
+                                <div class="col-md-4"><label class="field-label">Main Income Source</label>{{ form.app_guardian_income_source }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================ -->
+                <!-- SPECIAL CIRCUMSTANCES & ADDITIONAL INFO      -->
+                <!-- ============================================ -->
+                <div class="section-card" style="border-radius: 0; margin-bottom: 0; border-bottom: 1px solid #e2e6ec;">
+                    <div class="section-header" data-bs-toggle="collapse" data-bs-target="#secCircumstances">
+                        <h5><span class="section-num">4</span><i class="fas fa-hand-holding-heart section-icon"></i> Special Circumstances &amp; Additional Information</h5>
+                        <i class="fas fa-chevron-down toggle-icon"></i>
+                    </div>
+                    <div class="collapse show" id="secCircumstances">
+                        <div class="section-body">
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label class="field-label">Why are you applying for bursary assistance?</label>
+                                    {{ form.reason_for_applying }}
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">{{ form.is_orphan }} <label class="form-check-label">Orphan</label></div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">{{ form.is_single_parent }} <label class="form-check-label">Single Parent Family</label></div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">{{ form.has_disability }} <label class="form-check-label">Has Disability</label></div>
+                                </div>
+                                <div class="col-12">
+                                    <label class="field-label">Disability Details (if applicable)</label>
+                                    {{ form.disability_details }}
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check mb-2">{{ form.has_chronic_illness }} <label class="form-check-label">Applicant has chronic illness</label></div>
+                                    {{ form.chronic_illness_details }}
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check mb-2">{{ form.parent_has_disability }} <label class="form-check-label">Parent/guardian has disability</label></div>
+                                    {{ form.parent_disability_details }}
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check mb-2">{{ form.parent_has_chronic_illness }} <label class="form-check-label">Parent/guardian has chronic illness</label></div>
+                                    {{ form.parent_chronic_illness_details }}
+                                </div>
+                                <div class="col-12">
+                                    <label class="field-label">Other Special Circumstances</label>
+                                    {{ form.special_circumstances }}
+                                </div>
+                                <div class="col-12"><hr style="border-color: #eef1f5;"></div>
+                                <div class="col-md-6">
+                                    <div class="form-check mb-2">{{ form.previous_cdf_support }} <label class="form-check-label">Previously received NG-CDF bursary?</label></div>
+                                    {{ form.previous_cdf_support_details }}
+                                    <div class="field-help">Specify amount and when you received</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check mb-2">{{ form.previous_other_support_received }} <label class="form-check-label">Received bursary from other organizations?</label></div>
+                                    {{ form.previous_other_support_details }}
+                                    <div class="field-help">Provide details</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================ -->
+                <!-- ACADEMIC PERFORMANCE                         -->
+                <!-- ============================================ -->
+                <div class="section-card" style="border-radius: 0; margin-bottom: 0; border-bottom: 1px solid #e2e6ec;">
+                    <div class="section-header" data-bs-toggle="collapse" data-bs-target="#secAcademic">
+                        <h5><span class="section-num">5</span><i class="fas fa-chart-line section-icon"></i> Academic Performance</h5>
+                        <i class="fas fa-chevron-down toggle-icon"></i>
+                    </div>
+                    <div class="collapse show" id="secAcademic">
+                        <div class="section-body">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="field-label">Average Academic Performance</label>
+                                    {{ form.academic_performance }}
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check mt-4">{{ form.been_sent_away }} <label class="form-check-label">Sent away from school?</label></div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="field-label">Weeks away from school</label>
+                                    {{ form.sent_away_weeks }}
+                                </div>
+                                <div class="col-12">
+                                    <label class="field-label">Reasons for absence (if applicable)</label>
+                                    {{ form.sent_away_reasons }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================ -->
+                <!-- EDUCATION FUNDING HISTORY                    -->
+                <!-- ============================================ -->
+                <div class="section-card" style="border-radius: 0; margin-bottom: 0; border-bottom: 1px solid #e2e6ec;">
+                    <div class="section-header" data-bs-toggle="collapse" data-bs-target="#secFunding">
+                        <h5><span class="section-num">6</span><i class="fas fa-history section-icon"></i> Education Funding History</h5>
+                        <i class="fas fa-chevron-down toggle-icon"></i>
+                    </div>
+                    <div class="collapse show" id="secFunding">
+                        <div class="section-body">
+                            <p class="field-help mb-3">State the main source of funding for your education at each level</p>
+                            <div class="row g-3">
+                                <div class="col-md-4"><label class="field-label">Main source — Secondary</label>{{ form.funding_source_secondary }}</div>
+                                <div class="col-md-4"><label class="field-label">Main source — College</label>{{ form.funding_source_college }}</div>
+                                <div class="col-md-4"><label class="field-label">Main source — University</label>{{ form.funding_source_university }}</div>
+                                <div class="col-md-4"><label class="field-label">Other funding — Secondary</label>{{ form.other_funding_secondary }}</div>
+                                <div class="col-md-4"><label class="field-label">Other funding — College</label>{{ form.other_funding_college }}</div>
+                                <div class="col-md-4"><label class="field-label">Other funding — University</label>{{ form.other_funding_university }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================ -->
+                <!-- REFEREES                                     -->
+                <!-- ============================================ -->
+                <div class="section-card" style="border-radius: 0; margin-bottom: 0;">
+                    <div class="section-header" data-bs-toggle="collapse" data-bs-target="#secReferees">
+                        <h5><span class="section-num">7</span><i class="fas fa-user-friends section-icon"></i> Referees</h5>
+                        <i class="fas fa-chevron-down toggle-icon"></i>
+                    </div>
+                    <div class="collapse show" id="secReferees">
+                        <div class="section-body">
+                            <p class="field-help mb-3">Provide at least two referees who know your family well</p>
+                            <div class="row g-3">
+                                <div class="col-12"><h6 style="font-family: 'DM Serif Display', Georgia, serif; color: #0f2b46;">Referee 1</h6></div>
+                                <div class="col-md-4"><label class="field-label">Name</label>{{ form.referee1_name }}</div>
+                                <div class="col-md-4"><label class="field-label">Address</label>{{ form.referee1_address }}</div>
+                                <div class="col-md-4"><label class="field-label">Telephone</label>{{ form.referee1_telephone }}</div>
+                                <div class="col-12"><hr style="border-color: #eef1f5;"></div>
+                                <div class="col-12"><h6 style="font-family: 'DM Serif Display', Georgia, serif; color: #0f2b46;">Referee 2</h6></div>
+                                <div class="col-md-4"><label class="field-label">Name</label>{{ form.referee2_name }}</div>
+                                <div class="col-md-4"><label class="field-label">Address</label>{{ form.referee2_address }}</div>
+                                <div class="col-md-4"><label class="field-label">Telephone</label>{{ form.referee2_telephone }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================ -->
+                <!-- ACTION BUTTONS                               -->
+                <!-- ============================================ -->
+                <div style="padding: 1.5rem; background: #f7f8fa; border-top: 2px solid #e2e6ec;">
+                    <div class="alert" style="background: rgba(41,128,185,0.08); border-left: 4px solid #2980b9; border-radius: 10px; padding: 0.85rem 1.25rem; margin-bottom: 1.25rem;">
+                        <i class="fas fa-info-circle" style="color: #2980b9;"></i>
+                        You can <strong>Save as Draft</strong> at any time and return later to complete. All required documents must be uploaded before final submission.
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <button type="submit" name="save_draft" class="btn" style="background: #5a6a7e; color: #fff; border: none; font-weight: 600; padding: 0.6rem 1.5rem; border-radius: 6px;">
+                            <i class="fas fa-save"></i> Save as Draft
+                        </button>
+                        <button type="submit" name="save_continue" class="btn" style="background: linear-gradient(135deg, #0f2b46, #1a3d5c); color: #fff; border: none; font-weight: 600; padding: 0.6rem 1.5rem; border-radius: 6px; box-shadow: 0 2px 8px rgba(15,43,70,0.2);">
+                            Save &amp; Continue <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
         </div>
     </div>
 </div>
-
-<style>
-/* Styles for dynamic institution fields and progress steps */
-#div_id_institution, #div_id_new_institution_name {
-    transition: opacity 0.3s ease;
-}
-
-.progress-steps {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
-}
-
-.progress-step {
-    flex: 1;
-    text-align: center;
-    position: relative;
-}
-
-.progress-step:not(:last-child)::after {
-    content: '';
-    position: absolute;
-    top: 20px;
-    left: 50%;
-    width: 100%;
-    height: 2px;
-    background-color: #dee2e6;
-    z-index: -1;
-}
-
-.progress-step.active:not(:last-child)::after {
-    background-color: #0d6efd;
-}
-
-.progress-step-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background-color: #dee2e6;
-    color: #6c757d;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 0.5rem;
-}
-
-.progress-step.active .progress-step-icon {
-    background-color: #0d6efd;
-    color: white;
-}
-
-.progress-step small {
-    display: block;
-    color: #6c757d;
-}
-
-.progress-step.active small {
-    color: #0d6efd;
-    font-weight: bold;
-}
-</style>
 {% endblock %}
 
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // --- Elements ---
-    const educationLevelSelect = document.getElementById('id_education_level');
-    const institutionSelect = document.getElementById('id_institution');
-    const institutionWrapper = document.getElementById('div_id_institution');
-
-    // --- Validation and Setup ---
-    if (!educationLevelSelect || !institutionSelect || !institutionWrapper) {
-        console.error('Form elements for institution filtering are missing!');
-        return;
-    }
-
-    // Create a container for error messages, placed neatly under the institution select field
-    const errorContainer = document.createElement('div');
-    errorContainer.className = 'text-danger small mt-1';
-    institutionWrapper.appendChild(errorContainer);
-
-    // --- Functions ---
-
-    /**
-     * Sets the state of the institution dropdown.
-     * @param {boolean} isLoading - Whether to show a loading state.
-     * @param {string|null} message - An optional message to display in the dropdown.
-     */
-    function setInstitutionState(isLoading, message = null) {
-        institutionSelect.disabled = isLoading;
-        if (isLoading) {
-            institutionSelect.innerHTML = `<option value="">${message || 'Loading...'}</option>`;
-        }
-        errorContainer.textContent = ''; // Clear previous errors
-    }
-
-    /**
-     * Populates the institution dropdown with new options.
-     * @param {Array} institutions - Array of institution objects [{id, name}].
-     */
-    function populateInstitutions(institutions) {
-        institutionSelect.innerHTML = '<option value="">---------</option>'; // Reset and add placeholder
-        if (institutions && institutions.length > 0) {
-            institutions.forEach(inst => {
-                const option = new Option(inst.name, inst.id);
-                institutionSelect.appendChild(option);
-            });
-        }
-        // Always add the "Other" option for manual entry
-        institutionSelect.appendChild(new Option('Other (specify below)', 'other'));
-    }
-
-    /**
-     * Handles errors during the fetch process.
-     * @param {Error} error - The error object.
-     */
-    function handleFetchError(error) {
-        console.error('Failed to load institutions:', error);
-        setInstitutionState(true, 'Could not load institutions');
-        errorContainer.textContent = 'There was a problem fetching the list of institutions. Please try refreshing the page.';
-    }
-
-    /**
-     * Fetches and updates institutions based on the selected education level.
-     */
-    async function updateInstitutions() {
-        const levelId = educationLevelSelect.value;
-
-        if (!levelId) {
-            setInstitutionState(true, 'Select an education level first');
-            return;
-        }
-
-        setInstitutionState(true, 'Loading institutions...');
-        const url = `/bursary/ajax/filter-institutions/?education_level=${encodeURIComponent(levelId)}`;
-
-        try {
-            const response = await fetch(url, {
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json',
+    // Institution filtering by education level
+    const eduSelect = document.getElementById('id_education_level');
+    const instSelect = document.getElementById('id_institution');
+    if (eduSelect && instSelect) {
+        eduSelect.addEventListener('change', async function() {
+            const level = this.value;
+            if (!level) { instSelect.innerHTML = '<option value="">Select education level first</option>'; return; }
+            instSelect.innerHTML = '<option value="">Loading...</option>';
+            try {
+                const resp = await fetch('/bursary/ajax/filter-institutions/?education_level=' + encodeURIComponent(level), {
+                    headers: {'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json'}
+                });
+                const data = await resp.json();
+                instSelect.innerHTML = '<option value="">---------</option>';
+                if (data.institutions) {
+                    data.institutions.forEach(function(inst) {
+                        instSelect.appendChild(new Option(inst.name, inst.id));
+                    });
                 }
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
+                instSelect.appendChild(new Option('Other (specify below)', 'other'));
+            } catch(e) {
+                instSelect.innerHTML = '<option value="">Error loading</option>';
             }
-
-            const data = await response.json();
-            populateInstitutions(data.institutions);
-
-        } catch (error) {
-            handleFetchError(error);
-        } finally {
-            institutionSelect.disabled = false;
-        }
+        });
+        if (!eduSelect.value) instSelect.innerHTML = '<option value="">Select education level first</option>';
     }
 
-    // --- Event Listener ---
-    educationLevelSelect.addEventListener('change', updateInstitutions);
-
-    // --- Initial State ---
-    // Set the initial state of the institution dropdown when the page loads.
-    if (!educationLevelSelect.value) {
-        setInstitutionState(true, 'Select an education level first');
-    } else {
-        // If a level is already selected (e.g., on form validation error), trigger the update.
-        updateInstitutions();
-    }
+    // Toggle section collapse icon
+    document.querySelectorAll('.section-header').forEach(function(header) {
+        header.addEventListener('click', function() {
+            this.classList.toggle('collapsed');
+        });
+    });
 });
 </script>
 {% endblock %}

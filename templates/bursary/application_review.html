@@ -68,40 +68,49 @@
                 </div>
                 <div class="card-body">
                     <table class="table table-sm">
+                        <thead><tr><th>Criteria</th><th class="text-end">Score</th></tr></thead>
+                        <tbody>
                         <tr>
-                            <td>Financial Need</td>
+                            <td>Financial Need (monthly income)</td>
                             <td class="text-end">
-                                {% if application.family_monthly_income < 10000 %}40{% elif application.family_monthly_income < 20000 %}30{% elif application.family_monthly_income < 30000 %}20{% else %}10{% endif %}/40
+                                {% if application.family_monthly_income <= 0 %}40{% elif application.family_monthly_income < 5000 %}35{% elif application.family_monthly_income < 10000 %}30{% elif application.family_monthly_income < 20000 %}20{% elif application.family_monthly_income < 30000 %}12{% elif application.family_monthly_income < 50000 %}6{% else %}2{% endif %}/40
                             </td>
                         </tr>
                         <tr>
-                            <td>Orphan Status</td>
-                            <td class="text-end">{% if application.is_orphan %}15{% else %}0{% endif %}/15</td>
-                        </tr>
-                        <tr>
-                            <td>Single Parent</td>
-                            <td class="text-end">{% if application.is_single_parent %}10{% else %}0{% endif %}/10</td>
-                        </tr>
-                        <tr>
-                            <td>Disability</td>
-                            <td class="text-end">{% if application.has_disability %}10{% else %}0{% endif %}/10</td>
-                        </tr>
-                        <tr>
-                            <td>Siblings Factor</td>
+                            <td>Family Circumstances</td>
                             <td class="text-end">
-                                {% if application.siblings_in_school > 3 %}20{% elif application.siblings_in_school > 1 %}10{% else %}0{% endif %}/20
+                                {% with fs=application.family_status %}
+                                {% if fs == 'both_dead' %}12{% elif fs == 'one_dead' %}8{% elif fs == 'single_parent' %}6{% else %}0{% endif %}
+                                {% endwith %}
+                                {% if application.is_orphan %}+5{% endif %}
+                                {% if application.has_disability %}+4{% endif %}
+                                {% if application.is_single_parent %}+2{% endif %}
+                                {% if application.has_chronic_illness %}+1{% endif %}
+                                {% if application.parent_has_disability %}+1{% endif %}
+                                /25
                             </td>
                         </tr>
                         <tr>
-                            <td>Education Level</td>
+                            <td>Academic Performance</td>
                             <td class="text-end">
-                                {% if application.education_level == 'secondary' %}10{% elif application.education_level == 'tvet' %}8{% elif application.education_level == 'undergraduate' %}7{% elif application.education_level == 'primary' %}5{% else %}3{% endif %}/10
+                                {% if application.academic_performance == 'excellent' %}15{% elif application.academic_performance == 'very_good' %}12{% elif application.academic_performance == 'good' %}9{% elif application.academic_performance == 'fair' %}5{% elif application.academic_performance == 'poor' %}2{% else %}0{% endif %}/15
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Fee Burden / Funding Gap</td>
+                            <td class="text-end">—/10</td>
+                        </tr>
+                        <tr>
+                            <td>Previous Funding</td>
+                            <td class="text-end">
+                                {% if not application.previous_cdf_support and not application.previous_other_support_received %}10{% elif not application.previous_cdf_support %}6{% elif not application.previous_other_support_received %}4{% else %}1{% endif %}/10
                             </td>
                         </tr>
                         <tr class="table-primary">
                             <th>Total Score</th>
                             <th class="text-end">{{ bursary_score }}/100</th>
                         </tr>
+                        </tbody>
                     </table>
                 </div>
             </div>
@@ -112,18 +121,29 @@
                     <h5 class="mb-0">Documents Checklist</h5>
                 </div>
                 <div class="card-body">
-                    {% for doc in application.documents.all %}
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" checked disabled>
-                            <label class="form-check-label">
-                                {{ doc.get_document_type_display }}
-                                <a href="{% url 'bursary:document_download' application.pk doc.pk %}" 
-                                   class="btn btn-sm btn-link">
-                                    <i class="fas fa-download"></i>
-                                </a>
-                            </label>
+                    {% for doc in documents_ordered %}
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <i class="fas fa-check-circle" style="color: #1a8754;"></i>
+                            <span style="font-size: 0.88rem; color: #0f2b46;">{{ doc.get_document_type_display }}</span>
+                            <a href="{% url 'bursary:document_download' application.pk doc.pk %}" 
+                               class="btn btn-sm btn-link p-0 ms-auto" style="color: #0f2b46;">
+                                <i class="fas fa-download"></i>
+                            </a>
                         </div>
+                    {% empty %}
+                        <p class="text-muted mb-0" style="font-size: 0.9rem;">No documents uploaded.</p>
                     {% endfor %}
+
+                    {% if missing_doc_types %}
+                        <hr style="border-color: #eef1f5;">
+                        <p style="font-size: 0.78rem; font-weight: 600; color: #c0392b; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.5rem;">Missing</p>
+                        {% for doc_label in missing_doc_types %}
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <i class="fas fa-times-circle" style="color: #c0392b;"></i>
+                            <span style="font-size: 0.88rem; color: #c0392b;">{{ doc_label }}</span>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
                 </div>
             </div>
             
@@ -162,26 +182,20 @@
 <script>
     // Show/hide fields based on status selection
     const statusRadios = document.querySelectorAll('input[name="status"]');
-    const approvedAmountDiv = document.getElementById('div_id_approved_amount');
-    const rejectionReasonDiv = document.getElementById('div_id_rejection_reason');
+    const approvedAmountDiv = document.getElementById('approved_amount_div');
+    const rejectionReasonDiv = document.getElementById('rejection_reason_div');
     
     statusRadios.forEach(radio => {
         radio.addEventListener('change', function() {
             if (this.value === 'approved') {
-                approvedAmountDiv.style.display = 'block';
-                rejectionReasonDiv.style.display = 'none';
-                document.getElementById('id_approved_amount').required = true;
-                document.getElementById('id_rejection_reason').required = false;
+                if (approvedAmountDiv) approvedAmountDiv.classList.remove('d-none');
+                if (rejectionReasonDiv) rejectionReasonDiv.classList.add('d-none');
             } else if (this.value === 'rejected') {
-                approvedAmountDiv.style.display = 'none';
-                rejectionReasonDiv.style.display = 'block';
-                document.getElementById('id_approved_amount').required = false;
-                document.getElementById('id_rejection_reason').required = true;
+                if (approvedAmountDiv) approvedAmountDiv.classList.add('d-none');
+                if (rejectionReasonDiv) rejectionReasonDiv.classList.remove('d-none');
             } else {
-                approvedAmountDiv.style.display = 'none';
-                rejectionReasonDiv.style.display = 'none';
-                document.getElementById('id_approved_amount').required = false;
-                document.getElementById('id_rejection_reason').required = false;
+                if (approvedAmountDiv) approvedAmountDiv.classList.add('d-none');
+                if (rejectionReasonDiv) rejectionReasonDiv.classList.add('d-none');
             }
         });
     });

@@ -66,7 +66,7 @@ class RegisterView(CreateView):
         login(self.request, user)
         
         # Send verification code with request context
-        send_verification_code(user, self.request)  # Pass request here
+        send_verification_code(self.request, user)  # request first, user second
         
         messages.success(
             self.request, 
@@ -75,88 +75,49 @@ class RegisterView(CreateView):
         return response
 
 
-class EmailVerificationView(LoginRequiredMixin, FormView):
-    """Email verification view"""
+class EmailVerificationView(LoginRequiredMixin, View):
+    """Show 'check your email' page after registration"""
     template_name = 'accounts/verify_email.html'
-    form_class = EmailVerificationForm
-    success_url = reverse_lazy('bursary:dashboard')
-    
+
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_verified:
-            messages.info(request, 'Your Email is already verified.')
+            messages.info(request, 'Your email is already verified.')
             return redirect('bursary:dashboard')
         return super().dispatch(request, *args, **kwargs)
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['phone_number'] = self.request.user.phone_number
-        return context
-    
-    def form_valid(self, form):
-        code = form.cleaned_data.get('verification_code')
-        
-        # Check for valid verification code
-        verification = VerificationCode.objects.filter(
-            user=self.request.user,
-            code=code,
-            is_used=False,
-            expires_at__gt=timezone.now()
-        ).first()
-        
-        if verification:
-            # Mark user as verified
-            self.request.user.is_verified = True
-            self.request.user.save()
-            
-            # Mark code as used
-            verification.is_used = True
-            verification.save()
-            
-            messages.success(
-                self.request, 
-                'Email address verified successfully! You can now submit bursary applications.'
+
+    def get(self, request):
+        from django.conf import settings
+        context = {}
+        # In DEBUG mode, generate the verification link and show it on the page
+        if settings.DEBUG:
+            from bursary.utils import EmailVerificationService
+            token, uid = EmailVerificationService.generate_verification_token(request.user)
+            context['debug_verify_url'] = request.build_absolute_uri(
+                f'/bursary/verify-email/{uid}/{token}/'
             )
-            return super().form_valid(form)
-        else:
-            messages.error(
-                self.request, 
-                'Invalid or expired verification code. Please try again.'
-            )
-            return self.form_invalid(form)
+        return render(request, self.template_name, context)
 
 
 class ResendVerificationCodeView(LoginRequiredMixin, View):
-    """Resend verification code"""
+    """Resend verification email with click-to-verify link"""
     def post(self, request, *args, **kwargs):
         if request.user.is_verified:
             return JsonResponse({
                 'status': 'error',
                 'message': 'Email already verified.'
             })
-        
-        # Check for recent codes
-        recent_code = VerificationCode.objects.filter(
-            user=request.user,
-            created_at__gt=timezone.now() - timedelta(minutes=2)
-        ).exists()
-        
-        if recent_code:
-            return JsonResponse({
-                'status': 'error',
-                'message': 'Please wait 2 minutes before requesting a new code.'
-            })
-        
-        # Send new code with request context
+
+        # Send new verification email
         try:
-            send_verification_code(request.user, request)  # Pass request here
+            send_verification_code(request, request.user)
             return JsonResponse({
                 'status': 'success',
-                'message': 'Verification code sent to your email successfully.'
+                'message': 'Verification email sent! Please check your inbox.'
             })
         except Exception as e:
             return JsonResponse({
                 'status': 'error',
-                'message': 'Failed to send verification code. Please try again.'
+                'message': 'Failed to send verification email. Please try again.'
             })
 
 
@@ -294,7 +255,7 @@ class RegisterAPIView(generics.CreateAPIView):
         user = serializer.save()
         
         # Send verification email
-        send_verification_code(user, request)
+        send_verification_code(request, user)
         
         # Generate tokens
         refresh = RefreshToken.for_user(user)
@@ -378,7 +339,7 @@ class ResendVerificationCodeAPIView(APIView):
         
         # Send new code
         try:
-            send_verification_code(request.user, request)
+            send_verification_code(request, request.user)
             return Response({
                 'message': 'Verification code sent to your email successfully'
             }, status=status.HTTP_200_OK)
